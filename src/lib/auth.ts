@@ -1,5 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "./supabase-client";
+import type { CompanyProfile } from "./types";
 
 export async function getCurrentSession() {
   const { data } = await supabase.auth.getSession();
@@ -18,7 +19,7 @@ export async function signInWithEmail(email: string, password: string) {
   return data.session;
 }
 
-export async function signUpWithEmail(email: string, password: string) {
+export async function signUpWithEmail(email: string, password: string, profile: CompanyProfile) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -30,7 +31,7 @@ export async function signUpWithEmail(email: string, password: string) {
     }
   });
   if (error) throw error;
-  if (data.session) await claimCompanyMembership();
+  if (data.session) await createCompanyOnboarding(profile);
   return data.session;
 }
 
@@ -41,5 +42,22 @@ export async function signOut() {
 
 async function claimCompanyMembership() {
   const { error } = await supabase.rpc("claim_demo_company_membership");
+  if (error) throw error;
+}
+
+async function createCompanyOnboarding(profile: CompanyProfile) {
+  const { error } = await supabase.rpc("create_company_onboarding", {
+    profile: {
+      ...profile,
+      moduleIcons: {
+        dashboard: "P",
+        field: "C",
+        production: "M",
+        sales: "$",
+        compliance: "S",
+        settings: "S"
+      }
+    }
+  });
   if (error) throw error;
 }

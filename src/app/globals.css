@@ -249,6 +249,11 @@ button {
   padding: 30px;
 }
 
+.login-card.signup-card {
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
 .login-brand {
   color: var(--ink);
   margin-bottom: 10px;
@@ -267,6 +272,12 @@ button {
   font-weight: 700;
   margin: 0;
   padding: 10px 12px;
+}
+
+.signup-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .login-options {
@@ -1943,6 +1954,10 @@ dialog::backdrop {
 
   .login-card {
     padding: 22px;
+  }
+
+  .signup-grid {
+    grid-template-columns: 1fr;
   }
 
   .sidebar {

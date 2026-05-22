@@ -75,7 +75,8 @@ export type DashboardStats = {
 };
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
-  const { data, error } = await supabase.from("companies").select("*").eq("id", demoCompanyId).single();
+  const companyId = await getActiveCompanyId();
+  const { data, error } = await supabase.from("companies").select("*").eq("id", companyId).single();
   if (error || !data) return null;
 
   const uiSettings = (data.ui_settings ?? {}) as Partial<CompanyProfile>;
@@ -103,13 +104,15 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
 }
 
 export async function getCompanyModuleIcons(): Promise<Record<string, string> | null> {
-  const { data, error } = await supabase.from("companies").select("ui_settings").eq("id", demoCompanyId).single();
+  const companyId = await getActiveCompanyId();
+  const { data, error } = await supabase.from("companies").select("ui_settings").eq("id", companyId).single();
   if (error || !data) return null;
   const uiSettings = (data.ui_settings ?? {}) as { moduleIcons?: Record<string, string> };
   return uiSettings.moduleIcons ?? null;
 }
 
 export async function saveCompanyProfile(profile: CompanyProfile, moduleIcons: Record<string, string>) {
+  const companyId = await getActiveCompanyId();
   const { error } = await supabase
     .from("companies")
     .update({
@@ -135,16 +138,17 @@ export async function saveCompanyProfile(profile: CompanyProfile, moduleIcons: R
         moduleIcons
       }
     })
-    .eq("id", demoCompanyId);
+    .eq("id", companyId);
 
   if (error) throw error;
 }
 
 export async function getApiaries(): Promise<Apiary[]> {
+  const companyId = await getActiveCompanyId();
   const { data, error } = await supabase
     .from("apiaries")
     .select("id, code, name, commune, region, latitude, longitude, activity, hives_count, health, notes")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("code");
 
   if (error || !data) return fallbackApiaries;
@@ -166,10 +170,11 @@ export async function getApiaries(): Promise<Apiary[]> {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats | null> {
+  const companyId = await getActiveCompanyId();
   const [apiaryResult, inspectionResult, treatmentResult] = await Promise.all([
-    supabase.from("apiaries").select("hives_count, health").eq("company_id", demoCompanyId),
-    supabase.from("inspections").select("id").eq("company_id", demoCompanyId).gte("follow_up_at", new Date().toISOString().slice(0, 10)),
-    supabase.from("treatments").select("id, status").eq("company_id", demoCompanyId)
+    supabase.from("apiaries").select("hives_count, health").eq("company_id", companyId),
+    supabase.from("inspections").select("id").eq("company_id", companyId).gte("follow_up_at", new Date().toISOString().slice(0, 10)),
+    supabase.from("treatments").select("id, status").eq("company_id", companyId)
   ]);
 
   if (apiaryResult.error || inspectionResult.error || treatmentResult.error) return null;
@@ -195,10 +200,11 @@ export async function getDashboardStats(): Promise<DashboardStats | null> {
 }
 
 export async function getInspections(): Promise<Inspection[]> {
+  const companyId = await getActiveCompanyId();
   const { data, error } = await supabase
     .from("inspections")
     .select("id, inspected_at, inspected_by, sanitary_status, hives(code), apiaries(name)")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("inspected_at", { ascending: false })
     .limit(6);
 
@@ -214,10 +220,11 @@ export async function getInspections(): Promise<Inspection[]> {
 }
 
 export async function getTreatments(): Promise<Treatment[]> {
+  const companyId = await getActiveCompanyId();
   const { data, error } = await supabase
     .from("treatments")
     .select("diagnosis, medicine, active_ingredient, dose, batch, applied_at, withdrawal_until, status, hives(code), apiaries(name)")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("applied_at", { ascending: false })
     .limit(6);
 
@@ -238,9 +245,10 @@ export async function getTreatments(): Promise<Treatment[]> {
 }
 
 export async function getInspectionFormData() {
+  const companyId = await getActiveCompanyId();
   const [apiaryResult, hiveResult] = await Promise.all([
-    supabase.from("apiaries").select("id, name").eq("company_id", demoCompanyId).order("name"),
-    supabase.from("hives").select("id, code, apiary_id").eq("company_id", demoCompanyId).order("code")
+    supabase.from("apiaries").select("id, name").eq("company_id", companyId).order("name"),
+    supabase.from("hives").select("id, code, apiary_id").eq("company_id", companyId).order("code")
   ]);
 
   return {
@@ -250,10 +258,11 @@ export async function getInspectionFormData() {
 }
 
 export async function saveInspection(input: SaveInspectionInput) {
+  const companyId = await getActiveCompanyId();
   const { data, error } = await supabase
     .from("inspections")
     .insert({
-      company_id: demoCompanyId,
+      company_id: companyId,
       apiary_id: input.apiaryId,
       hive_id: input.hiveId,
       inspected_by: input.inspectedBy,
@@ -293,30 +302,33 @@ export async function saveInspection(input: SaveInspectionInput) {
 }
 
 export async function getSalesOrders() {
+  const companyId = await getActiveCompanyId();
   const { data } = await supabase
     .from("sales_orders")
     .select("customer_name, product, quantity, total_amount, status")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("ordered_at", { ascending: false });
 
   return data ?? [];
 }
 
 export async function getHarvestLots() {
+  const companyId = await getActiveCompanyId();
   const { data } = await supabase
     .from("harvest_lots")
     .select("lot_code, product, kilos, container_count, sale_price_per_kg, estimated_cost, status")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("harvest_date", { ascending: false });
 
   return data ?? [];
 }
 
 export async function getInventoryItems() {
+  const companyId = await getActiveCompanyId();
   const { data } = await supabase
     .from("inventory_items")
     .select("name, quantity, min_quantity, unit, location")
-    .eq("company_id", demoCompanyId)
+    .eq("company_id", companyId)
     .order("name");
 
   return data ?? [];
@@ -324,6 +336,21 @@ export async function getInventoryItems() {
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+}
+
+async function getActiveCompanyId() {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return demoCompanyId;
+
+  const { data } = await supabase
+    .from("company_members")
+    .select("company_id")
+    .eq("user_id", sessionData.session.user.id)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+
+  return data?.company_id ?? demoCompanyId;
 }
 
 function addDays(days: number) {
