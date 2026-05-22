@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApiGestor Chile | SaaS Apicola</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="locked">
+    <section class="login-screen" id="loginScreen">
+      <div class="login-art" aria-hidden="true">
+        <div class="login-comb"></div>
+        <div class="login-bee">
+          <span class="bee-wing left"></span>
+          <span class="bee-body"></span>
+          <span class="bee-wing right"></span>
+        </div>
+        <div class="login-copy">
+          <span class="pill">SaaS apicola</span>
+          <h1>Gestiona tu apiario con trazabilidad profesional.</h1>
+          <p>Control sanitario, inspecciones, cosecha, lotes QR y ventas para productores apicolas.</p>
+        </div>
+      </div>
+
+      <form class="login-card" id="loginForm">
+        <div class="brand login-brand">
+          <span class="brand-mark"><span></span></span>
+          <div>
+            <strong>ApiGestor</strong>
+            <small>Chile</small>
+          </div>
+        </div>
+        <div>
+          <p class="eyebrow">Acceso privado</p>
+          <h2>Entrar al panel</h2>
+        </div>
+        <label>Correo
+          <input id="loginEmail" type="email" value="maria@apigestor.cl" autocomplete="email" required />
+        </label>
+        <label>Clave
+          <input id="loginPassword" type="password" value="demo2026" autocomplete="current-password" required />
+        </label>
+        <div class="login-options">
+          <label class="check-row"><input type="checkbox" checked /> Recordarme</label>
+          <button class="text-button" type="button">Recuperar clave</button>
+        </div>
+        <button class="primary-button" type="submit">Ingresar al dashboard</button>
+        <button class="ghost-button" id="demoLoginBtn" type="button">Usar acceso demo</button>
+        <p class="login-note">Demo local: puedes entrar con los datos precargados.</p>
+      </form>
+    </section>
+
+    <aside class="sidebar" aria-label="Navegacion principal">
+      <div class="honeycomb-bg" aria-hidden="true"></div>
+      <div class="brand">
+        <span class="brand-mark"><span></span></span>
+        <div>
+          <strong>ApiGestor</strong>
+          <small>Chile</small>
+        </div>
+      </div>
+
+      <button class="menu-toggle" id="menuToggle" type="button" aria-controls="mainNav" aria-expanded="false" aria-label="Abrir menu">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span class="sr-only">Abrir menu</span>
+      </button>
+
+      <nav class="nav" id="mainNav">
+        <button class="nav-item active" data-view="dashboard" type="button" aria-label="Panel"><span class="nav-icon">P</span>Panel</button>
+        <button class="nav-item" data-view="field" type="button" aria-label="Campo"><span class="nav-icon">C</span>Campo</button>
+        <button class="nav-item" data-view="productionHub" type="button" aria-label="Produccion"><span class="nav-icon">M</span>Produccion</button>
+        <button class="nav-item" data-view="sales" type="button" aria-label="Ventas"><span class="nav-icon">$</span>Ventas</button>
+        <button class="nav-item" data-view="compliance" type="button" aria-label="SAG SIPEC"><span class="nav-icon">S</span>SAG / SIPEC</button>
+        <button class="nav-item" data-view="settings" type="button" aria-label="Configuracion"><span class="nav-icon">S</span>Configuracion</button>
+      </nav>
+
+      <div class="sidebar-card">
+        <span class="pill">Piloto comercial</span>
+        <p>Gestion sanitaria, cosecha, ventas y trazabilidad para productores apicolas.</p>
+        <button class="sidebar-cta" id="pilotBtn" type="button">Preparar propuesta</button>
+      </div>
+    </aside>
+
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow" id="viewEyebrow">Temporada 2025/2026</p>
+          <h1 id="viewTitle">Panel Apicola</h1>
+        </div>
+        <div class="profile">
+          <button class="ghost-button" id="exportBtn" type="button">Exportar</button>
+          <button class="primary-button" id="newInspectionBtn" type="button">Nueva inspeccion</button>
+          <span class="notification">3</span>
+          <span class="avatar">MA</span>
+          <div>
+            <strong>Maria Apicultora</strong>
+            <small>Apicola del Valle</small>
+          </div>
+          <button class="logout-button" id="logoutBtn" type="button">Salir</button>
+        </div>
+      </header>
+
+      <section class="view active" id="dashboard">
+        <div class="season-row">
+          <select aria-label="Seleccionar temporada">
+            <option>Temporada 2025/2026</option>
+            <option>Temporada 2024/2025</option>
+          </select>
+          <span class="sync-pill">Sincronizado hace 4 min</span>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi-card honey">
+            <span class="kpi-icon">B</span>
+            <div>
+              <p>Total colmenas</p>
+              <strong>128</strong>
+              <small>+6 este mes</small>
+            </div>
+          </article>
+          <article class="kpi-card green">
+            <span class="kpi-icon">S</span>
+            <div>
+              <p>Salud del apiario</p>
+              <strong>91%</strong>
+              <small>Buena</small>
+            </div>
+          </article>
+          <article class="kpi-card blue">
+            <span class="kpi-icon">I</span>
+            <div>
+              <p>Proximas inspecciones</p>
+              <strong>7</strong>
+              <small>Esta semana</small>
+            </div>
+          </article>
+          <article class="kpi-card red">
+            <span class="kpi-icon">!</span>
+            <div>
+              <p>Alertas</p>
+              <strong>3</strong>
+              <small>Requieren atencion</small>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel map-panel">
+            <div class="panel-header">
+              <h2>Mapa de apiarios</h2>
+              <select id="healthFilter" aria-label="Filtrar apiarios">
+                <option value="all">Todos los apiarios</option>
+                <option value="ok">Salud buena</option>
+                <option value="watch">Revision</option>
+                <option value="risk">Criticos</option>
+              </select>
+            </div>
+            <div class="map-layout">
+              <div class="apiary-map" id="apiaryMap"></div>
+              <div class="apiary-list" id="apiaryList"></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Proximas inspecciones</h2>
+            </div>
+            <div class="inspection-list" id="inspectionList"></div>
+            <button class="text-button" data-view-target="inspections" type="button">Ver todas</button>
+          </section>
+
+          <section class="panel alert-panel">
+            <div class="panel-header">
+              <h2>Alertas de tratamientos</h2>
+            </div>
+            <div class="treatment-list" id="treatmentList"></div>
+            <button class="text-button" data-view-target="treatments" type="button">Ver todas las alertas</button>
+          </section>
+
+          <section class="panel health-panel">
+            <div class="panel-header">
+              <h2>Salud del apiario</h2>
+            </div>
+            <div class="health-content">
+              <div class="donut" aria-label="91 por ciento salud general">
+                <strong>91%</strong>
+                <span>Salud general</span>
+              </div>
+              <div class="health-legend">
+                <span><i class="dot green"></i>Buena <b>82 colmenas</b></span>
+                <span><i class="dot honey"></i>Regular <b>11 colmenas</b></span>
+                <span><i class="dot orange"></i>Baja <b>4 colmenas</b></span>
+                <span><i class="dot red"></i>Critica <b>1 colmena</b></span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="device-row">
+          <section class="phone inspection-phone" aria-label="Vista movil de inspeccion">
+            <div class="phone-top"><span>9:10</span><span></span></div>
+            <div class="phone-header">
+              <button type="button">‹</button>
+              <div>
+                <strong>Inspeccion Colmena 24</strong>
+                <small>El Manzano</small>
+              </div>
+              <button type="button">⋮</button>
+            </div>
+            <label>Fecha<input value="18 may 2026" readonly /></label>
+            <label>Estado de la reina<select><option>Presente</option></select></label>
+            <label>Postura<select><option>Normal</option></select></label>
+            <div class="segmented"><button>Baja</button><button class="active">Media</button><button>Alta</button></div>
+            <div class="voice-note"><span></span><b>00:28</b><button type="button">Mic</button></div>
+            <div class="photo-row"><span></span><span></span><span></span><button type="button">Foto</button></div>
+            <button class="phone-save" type="button">Guardar inspeccion</button>
+          </section>
+
+          <section class="phone trace-phone" aria-label="Vista movil de lote trazable">
+            <div class="phone-top"><span>9:10</span><span></span></div>
+            <div class="phone-header">
+              <button type="button">‹</button>
+              <strong>Lote de Miel 2026</strong>
+              <button type="button">⋮</button>
+            </div>
+            <div class="jar-hero">
+              <div class="jar"></div>
+              <div class="jar"></div>
+              <div class="qr">QR</div>
+            </div>
+            <dl class="lot-details">
+              <div><dt>Codigo de lote</dt><dd>M2026-001</dd></div>
+              <div><dt>Kilos cosechados</dt><dd>320 kg</dd></div>
+              <div><dt>Apiario de origen</dt><dd>El Manzano</dd></div>
+              <div><dt>Precio venta</dt><dd>$4.800 / kg</dd></div>
+            </dl>
+            <div class="margin-box">
+              <span>Margen estimado</span>
+              <strong>$672.000 (43,8%)</strong>
+            </div>
+            <button class="phone-outline" type="button">Ver trazabilidad completa</button>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" id="sagProfile"></section>
+      <section class="view" id="field"></section>
+      <section class="view" id="apiaries"></section>
+      <section class="view" id="hives"></section>
+      <section class="view" id="sipec"></section>
+      <section class="view" id="inspections"></section>
+      <section class="view" id="treatments"></section>
+      <section class="view" id="biosecurity"></section>
+      <section class="view" id="productionHub"></section>
+      <section class="view" id="production"></section>
+      <section class="view" id="traceability"></section>
+      <section class="view" id="sales"></section>
+      <section class="view" id="inventory"></section>
+      <section class="view" id="reports"></section>
+      <section class="view" id="priorities"></section>
+      <section class="view" id="compliance"></section>
+      <section class="view" id="settings"></section>
+    </main>
+
+    <div class="floating-actions" aria-label="Acciones rapidas de campo">
+      <button id="floatInspectionBtn" type="button" title="Registrar inspeccion">Inspeccion</button>
+      <button id="floatVoiceBtn" type="button" title="Nota de voz">Voz</button>
+      <button id="floatQrBtn" type="button" title="Escanear QR o NFC">QR</button>
+    </div>
+
+    <dialog id="inspectionDialog">
+      <form method="dialog" class="modal">
+        <h2>Nueva inspeccion</h2>
+        <label>Apiario<select id="dialogApiary"></select></label>
+        <label>Colmena<input id="dialogHive" type="number" min="1" value="24" /></label>
+        <label>Observacion<textarea id="dialogNote" rows="4">Reina presente, postura normal y reservas medias.</textarea></label>
+        <div class="modal-actions">
+          <button class="ghost-button" value="cancel" type="submit">Cancelar</button>
+          <button class="primary-button" id="saveDialogInspection" value="default" type="submit">Guardar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
