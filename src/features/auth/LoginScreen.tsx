@@ -80,6 +80,11 @@ export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
   return (
     <section className="login-screen">
       <div className="login-art" aria-hidden="true">
+        <div className="login-bee">
+          <span className="bee-wing left" />
+          <span className="bee-wing right" />
+          <span className="bee-body" />
+        </div>
         <div className="login-copy">
           <span className="pill">SaaS apicola</span>
           <h1>Gestiona tu apiario con trazabilidad profesional.</h1>
