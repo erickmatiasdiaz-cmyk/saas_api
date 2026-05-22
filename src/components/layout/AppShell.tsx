@@ -15,7 +15,7 @@ import { SalesView } from "@/features/sales/SalesView";
 import { SettingsView } from "@/features/settings/SettingsView";
 import { getCurrentSession, onAuthChange, signOut } from "@/lib/auth";
 import { navItems } from "@/lib/mock-data";
-import { getCompanyProfile } from "@/lib/supabase-data";
+import { getCompanyModuleIcons, getCompanyProfile } from "@/lib/supabase-data";
 import type { CompanyProfile, ViewId } from "@/lib/types";
 
 const viewMeta: Record<ViewId, { title: string; eyebrow: string }> = {
@@ -75,8 +75,10 @@ export function AppShell() {
 
   useEffect(() => {
     let mounted = true;
-    getCompanyProfile().then((profile) => {
-      if (profile && mounted) setCompany(profile);
+    Promise.all([getCompanyProfile(), getCompanyModuleIcons()]).then(([profile, savedModuleIcons]) => {
+      if (!mounted) return;
+      if (profile) setCompany(profile);
+      if (savedModuleIcons) setModuleIcons((current) => ({ ...current, ...savedModuleIcons }));
     });
     return () => {
       mounted = false;

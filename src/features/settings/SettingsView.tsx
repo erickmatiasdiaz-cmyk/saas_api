@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { BrandIcon, CompanyProfile } from "@/lib/types";
 import { navItems } from "@/lib/mock-data";
+import { saveCompanyProfile } from "@/lib/supabase-data";
 
 interface SettingsViewProps {
   company: CompanyProfile;
@@ -35,15 +36,24 @@ const moduleDetails: Record<string, string> = {
 export function SettingsView({ company, moduleIcons, onSave, onSaveModuleIcons, onToast }: SettingsViewProps) {
   const [draft, setDraft] = useState<CompanyProfile>(company);
   const [iconDraft, setIconDraft] = useState<Record<string, string>>(moduleIcons);
+  const [saving, setSaving] = useState(false);
 
   function update<K extends keyof CompanyProfile>(key: K, value: CompanyProfile[K]) {
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
-  function saveSettings() {
-    onSave(draft);
-    onSaveModuleIcons(iconDraft);
-    onToast("Cuenta empresa y marca actualizadas");
+  async function saveSettings() {
+    setSaving(true);
+    try {
+      await saveCompanyProfile(draft, iconDraft);
+      onSave(draft);
+      onSaveModuleIcons(iconDraft);
+      onToast("Cuenta empresa guardada en Supabase");
+    } catch (error) {
+      onToast(error instanceof Error ? error.message : "No se pudo guardar configuracion");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -190,7 +200,9 @@ export function SettingsView({ company, moduleIcons, onSave, onSaveModuleIcons, 
             <h2>Operacion del sistema</h2>
             <p>Parametros por defecto para temporada, terreno y recordatorios.</p>
           </div>
-          <button className="primary-button" onClick={saveSettings} type="button">Guardar configuracion</button>
+          <button className="primary-button" disabled={saving} onClick={() => void saveSettings()} type="button">
+            {saving ? "Guardando..." : "Guardar configuracion"}
+          </button>
         </div>
         <div className="form-grid triple">
           <label>Temporada activa<input defaultValue="2025/2026" /></label>
