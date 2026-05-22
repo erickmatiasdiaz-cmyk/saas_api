@@ -258,6 +258,17 @@ button {
   font-size: 30px;
 }
 
+.auth-error {
+  background: var(--red-soft);
+  border: 1px solid #f0afa0;
+  border-radius: 10px;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px 12px;
+}
+
 .login-options {
   align-items: center;
   display: flex;

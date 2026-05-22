@@ -1,14 +1,47 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { useState } from "react";
+import { signInWithEmail, signUpWithEmail } from "@/lib/auth";
 import type { CompanyProfile } from "@/lib/types";
 
 interface LoginScreenProps {
   company: CompanyProfile;
   onLogin: () => void;
+  onToast: (message: string) => void;
 }
 
-export function LoginScreen({ company, onLogin }: LoginScreenProps) {
+export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
+  const [email, setEmail] = useState(company.email);
+  const [password, setPassword] = useState("demo2026");
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleSubmit() {
+    setLoading(true);
+    setErrorMessage("");
+    try {
+      const session = mode === "signin"
+        ? await signInWithEmail(email.trim(), password)
+        : await signUpWithEmail(email.trim(), password);
+
+      if (!session && mode === "signup") {
+        onToast("Cuenta creada. Revisa tu correo si Supabase pide confirmacion.");
+        setMode("signin");
+        return;
+      }
+
+      onToast("Sesion iniciada con Supabase");
+      onLogin();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo iniciar sesion";
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <section className="login-screen">
       <div className="login-art" aria-hidden="true">
@@ -23,7 +56,7 @@ export function LoginScreen({ company, onLogin }: LoginScreenProps) {
         className="login-card"
         onSubmit={(event) => {
           event.preventDefault();
-          onLogin();
+          void handleSubmit();
         }}
       >
         <div className="brand">
@@ -41,17 +74,18 @@ export function LoginScreen({ company, onLogin }: LoginScreenProps) {
         </div>
         <label>
           Correo
-          <input defaultValue={company.email} type="email" />
+          <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} />
         </label>
         <label>
           Clave
-          <input defaultValue="demo2026" type="password" />
+          <input autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={6} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
         </label>
+        {errorMessage && <p className="auth-error">{errorMessage}</p>}
         <button className="primary-button" type="submit">
-          Ingresar al dashboard
+          {loading ? "Conectando..." : mode === "signin" ? "Ingresar con Supabase" : "Crear cuenta"}
         </button>
-        <button className="ghost-button" onClick={onLogin} type="button">
-          Usar acceso demo
+        <button className="ghost-button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")} type="button">
+          {mode === "signin" ? "Crear usuario en Supabase" : "Ya tengo cuenta"}
         </button>
       </form>
     </section>

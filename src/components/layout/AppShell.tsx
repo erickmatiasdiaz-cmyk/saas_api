@@ -13,6 +13,7 @@ import { InspectionView } from "@/features/field/InspectionView";
 import { ProductionHub } from "@/features/production/ProductionHub";
 import { SalesView } from "@/features/sales/SalesView";
 import { SettingsView } from "@/features/settings/SettingsView";
+import { getCurrentSession, onAuthChange, signOut } from "@/lib/auth";
 import { navItems } from "@/lib/mock-data";
 import { getCompanyProfile } from "@/lib/supabase-data";
 import type { CompanyProfile, ViewId } from "@/lib/types";
@@ -82,6 +83,18 @@ export function AppShell() {
     };
   }, []);
 
+  useEffect(() => {
+    let mounted = true;
+    getCurrentSession().then((session) => {
+      if (mounted) setLoggedIn(Boolean(session));
+    });
+    const unsubscribe = onAuthChange((session) => setLoggedIn(Boolean(session)));
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
+
   const content = useMemo(() => {
     switch (activeView) {
       case "dashboard":
@@ -108,16 +121,26 @@ export function AppShell() {
     window.setTimeout(() => setToast(""), 2200);
   }
 
+  async function handleLogout() {
+    try {
+      await signOut();
+      setLoggedIn(false);
+      showToast("Sesion cerrada");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "No se pudo cerrar sesion");
+    }
+  }
+
   return (
     <>
-      {!loggedIn && <LoginScreen company={company} onLogin={() => setLoggedIn(true)} />}
+      {!loggedIn && <LoginScreen company={company} onLogin={() => setLoggedIn(true)} onToast={showToast} />}
       <Sidebar activeView={activeView} company={company} items={navigationItems} onNavigate={setActiveView} onPrepareProposal={() => showToast("Propuesta piloto preparada")} />
       <main className="app-shell">
         <Topbar
           company={company}
           eyebrow={meta.eyebrow}
           onExport={() => showToast(`Exportando respaldo de ${meta.title}`)}
-          onLogout={() => setLoggedIn(false)}
+          onLogout={handleLogout}
           onNewInspection={() => setActiveView("inspections")}
           title={meta.title}
         />
