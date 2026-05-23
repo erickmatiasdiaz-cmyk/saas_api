@@ -3,13 +3,11 @@ import type { CompanyProfile } from "@/lib/types";
 interface TopbarProps {
   company: CompanyProfile;
   eyebrow: string;
-  onExport: () => void;
   title: string;
-  onNewInspection: () => void;
   onLogout: () => void;
 }
 
-export function Topbar({ company, eyebrow, onExport, onNewInspection, title, onLogout }: TopbarProps) {
+export function Topbar({ company, eyebrow, title, onLogout }: TopbarProps) {
   return (
     <header className="topbar">
       <div>
@@ -17,8 +15,6 @@ export function Topbar({ company, eyebrow, onExport, onNewInspection, title, onL
         <h1>{title}</h1>
       </div>
       <div className="profile">
-        <button className="ghost-button" onClick={onExport} type="button">Exportar</button>
-        <button className="primary-button" onClick={onNewInspection} type="button">Nueva inspeccion</button>
         <span className="notification">3</span>
         <span className="avatar">{company.ownerInitials}</span>
         <div>

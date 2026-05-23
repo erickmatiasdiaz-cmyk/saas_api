@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import {
+  deleteRecordForView,
   getRecordFormConfig,
   getRecordViewData,
   saveRecordForView,
@@ -20,7 +21,7 @@ const loadingData: RecordViewData = {
   source: "Supabase",
   cards: [["...", "Consultando", "Base de datos"]],
   headers: ["Estado"],
-  rows: [["Sincronizando datos reales desde Supabase"]]
+  rows: [{ id: "loading", cells: ["Sincronizando datos reales desde Supabase"] }]
 };
 
 const errorData: RecordViewData = {
@@ -28,7 +29,7 @@ const errorData: RecordViewData = {
   source: "Supabase",
   cards: [["!", "Error", "Revisa Supabase"]],
   headers: ["Detalle"],
-  rows: [["La vista no pudo leer la informacion de la base de datos"]]
+  rows: [{ id: "error", cells: ["La vista no pudo leer la informacion de la base de datos"] }]
 };
 
 export function GenericRecordView({ view }: GenericRecordViewProps) {
@@ -40,6 +41,7 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [feedback, setFeedback] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -53,6 +55,7 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
         setFormConfig(nextFormConfig);
         setFormValues(nextFormConfig?.initialValues ?? {});
         setFeedback("");
+        setEditingId(null);
       })
       .catch(() => {
         if (mounted) setConfig(errorData);
@@ -78,9 +81,10 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
     setSaving(true);
     setFeedback("");
     try {
-      const id = await saveRecordForView(view, formValues);
-      setFeedback(`Registro guardado en Supabase: ${id.slice(0, 8)}`);
+      const id = await saveRecordForView(view, formValues, editingId);
+      setFeedback(`${editingId ? "Registro actualizado" : "Registro guardado"} en Supabase: ${id.slice(0, 8)}`);
       setFormOpen(false);
+      setEditingId(null);
       setRefreshKey((key) => key + 1);
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "No se pudo guardar el registro");
@@ -91,6 +95,31 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
 
   function updateValue(name: string, value: string) {
     setFormValues((current) => ({ ...current, [name]: value }));
+  }
+
+  function startEdit(rowId: string) {
+    const row = config.rows.find((item) => item.id === rowId);
+    if (!row?.values || !formConfig) return;
+    setEditingId(rowId);
+    setFormValues({ ...formConfig.initialValues, ...row.values });
+    setFormOpen(true);
+    setFeedback(`Editando registro ${rowId.slice(0, 8)}`);
+  }
+
+  async function handleDelete(rowId: string) {
+    const confirmed = window.confirm("¿Seguro que quieres eliminar o archivar este registro?");
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await deleteRecordForView(view, rowId);
+      setFeedback(`Registro eliminado/archivado: ${rowId.slice(0, 8)}`);
+      setRefreshKey((key) => key + 1);
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "No se pudo eliminar el registro");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -110,10 +139,14 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
           <div className="panel-header">
             <div>
               <span className="pill">Registro conectado</span>
-              <h2>{formConfig.title}</h2>
+              <h2>{editingId ? `Editar ${formConfig.title.toLowerCase()}` : formConfig.title}</h2>
               <p>Guarda nuevos datos en Supabase y actualiza esta pantalla al instante.</p>
             </div>
-            <button className="primary-button" onClick={() => setFormOpen((open) => !open)} type="button">
+            <button className="primary-button" onClick={() => {
+              setEditingId(null);
+              setFormValues(formConfig.initialValues);
+              setFormOpen((open) => !open);
+            }} type="button">
               {formOpen ? "Cerrar formulario" : "Nuevo registro"}
             </button>
           </div>
@@ -126,9 +159,12 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
                 ))}
               </div>
               <div className="modal-actions">
-                <button className="ghost-button" onClick={() => setFormValues(formConfig.initialValues)} type="button">Limpiar</button>
+                <button className="ghost-button" onClick={() => {
+                  setEditingId(null);
+                  setFormValues(formConfig.initialValues);
+                }} type="button">Limpiar</button>
                 <button className="primary-button" disabled={saving} onClick={() => void handleSubmit()} type="button">
-                  {saving ? "Guardando..." : formConfig.submitLabel}
+                  {saving ? "Guardando..." : editingId ? "Guardar cambios" : formConfig.submitLabel}
                 </button>
               </div>
             </>
@@ -149,12 +185,25 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
         <div className="table-wrap">
           <table>
             <thead>
-              <tr>{config.headers.map((header) => <th key={header}>{header}</th>)}</tr>
+              <tr>
+                {config.headers.map((header) => <th key={header}>{header}</th>)}
+                {config.rows.some((row) => row.editable || row.deletable) && <th>Acciones</th>}
+              </tr>
             </thead>
             <tbody>
               {config.rows.length ? (
                 config.rows.map((row) => (
-                  <tr key={row.join("-")}>{row.map((cell, index) => <td key={`${cell}-${index}`}>{cell || "Sin dato"}</td>)}</tr>
+                  <tr key={row.id}>
+                    {row.cells.map((cell, index) => <td key={`${row.id}-${index}`}>{cell || "Sin dato"}</td>)}
+                    {(row.editable || row.deletable) && (
+                      <td>
+                        <div className="row-actions">
+                          {row.editable && <button className="text-button" onClick={() => startEdit(row.id)} type="button">Editar</button>}
+                          {row.deletable && <button className="text-button danger" disabled={saving} onClick={() => void handleDelete(row.id)} type="button">Eliminar</button>}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
                 ))
               ) : (
                 <tr>

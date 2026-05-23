@@ -636,6 +636,10 @@ h2 {
   padding: 0;
 }
 
+.text-button.danger {
+  color: var(--red);
+}
+
 .view {
   display: none;
 }
@@ -1771,6 +1775,13 @@ th {
   color: var(--muted);
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.row-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 dialog {

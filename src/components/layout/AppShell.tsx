@@ -14,7 +14,7 @@ import { SalesView } from "@/features/sales/SalesView";
 import { SettingsView } from "@/features/settings/SettingsView";
 import { getCurrentSession, onAuthChange, signOut } from "@/lib/auth";
 import { navItems } from "@/lib/mock-data";
-import { createExportJob, getCompanyModuleIcons, getCompanyProfile } from "@/lib/supabase-data";
+import { getCompanyModuleIcons, getCompanyProfile } from "@/lib/supabase-data";
 import type { CompanyProfile, ViewId } from "@/lib/types";
 
 const viewMeta: Record<ViewId, { title: string; eyebrow: string }> = {
@@ -132,15 +132,6 @@ export function AppShell() {
     }
   }
 
-  async function handleExport() {
-    try {
-      const id = await createExportJob(activeView, "pdf");
-      showToast(`Exportacion registrada en Supabase: ${id.slice(0, 8)}`);
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : "No se pudo registrar exportacion");
-    }
-  }
-
   return (
     <>
       {!loggedIn && <LoginScreen company={company} onLogin={() => setLoggedIn(true)} onToast={showToast} />}
@@ -149,9 +140,7 @@ export function AppShell() {
         <Topbar
           company={company}
           eyebrow={meta.eyebrow}
-          onExport={() => void handleExport()}
           onLogout={handleLogout}
-          onNewInspection={() => setActiveView("inspections")}
           title={meta.title}
         />
         {content}

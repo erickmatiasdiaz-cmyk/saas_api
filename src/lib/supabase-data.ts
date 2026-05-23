@@ -78,8 +78,16 @@ export type RecordViewData = {
   title: string;
   cards: Array<[string, string, string]>;
   headers: string[];
-  rows: string[][];
+  rows: RecordViewRow[];
   source: "Supabase" | "Configuracion";
+};
+
+export type RecordViewRow = {
+  id: string;
+  cells: string[];
+  values?: Record<string, string>;
+  editable?: boolean;
+  deletable?: boolean;
 };
 
 export type RecordFormField = {
@@ -173,6 +181,7 @@ export async function getApiaries(): Promise<Apiary[]> {
     .from("apiaries")
     .select("id, code, name, commune, region, latitude, longitude, activity, hives_count, health, notes")
     .eq("company_id", companyId)
+    .neq("status", "archived")
     .order("code");
 
   if (error || !data) return fallbackApiaries;
@@ -374,8 +383,9 @@ export async function getHarvestLots() {
   const companyId = await getActiveCompanyId();
   const { data } = await supabase
     .from("harvest_lots")
-    .select("lot_code, product, kilos, container_count, sale_price_per_kg, estimated_cost, status")
+    .select("id, lot_code, harvest_date, product, kilos, container_count, sale_price_per_kg, estimated_cost, status, notes")
     .eq("company_id", companyId)
+    .neq("status", "archived")
     .order("harvest_date", { ascending: false });
 
   return data ?? [];
@@ -385,7 +395,7 @@ export async function getInventoryItems() {
   const companyId = await getActiveCompanyId();
   const { data } = await supabase
     .from("inventory_items")
-    .select("name, quantity, min_quantity, unit, location")
+    .select("id, name, category, quantity, min_quantity, unit, batch, expires_at, location")
     .eq("company_id", companyId)
     .order("name");
 
@@ -586,47 +596,16 @@ export async function getRecordFormConfig(view: ViewId): Promise<RecordFormConfi
   return null;
 }
 
-export async function saveRecordForView(view: ViewId, values: Record<string, string>) {
+export async function saveRecordForView(view: ViewId, values: Record<string, string>, recordId?: string | null) {
   const companyId = await getActiveCompanyId();
-  const cleaned = cleanValues(values);
-  let table = "";
-  let payload: Record<string, unknown> = { company_id: companyId };
+  const { table, payload } = buildPayloadForView(view, values, companyId);
 
-  if (view === "apiaries") {
-    table = "apiaries";
-    payload = { ...payload, ...cleaned, activity: splitList(values.activity), hives_count: toNumber(values.hives_count), latitude: optionalNumber(values.latitude), longitude: optionalNumber(values.longitude) };
-  } else if (view === "hives") {
-    table = "hives";
-    payload = { ...payload, ...cleaned, frames_count: optionalNumber(values.frames_count) };
-  } else if (view === "treatments") {
-    table = "treatments";
-    payload = { ...payload, ...cleaned, hive_id: values.hive_id || null, withdrawal_until: values.withdrawal_until || null };
-  } else if (view === "biosecurity") {
-    table = "biosecurity_events";
-    payload = { ...payload, ...cleaned, apiary_id: values.apiary_id || null, mortality_count: toNumber(values.mortality_count) };
-  } else if (view === "traceability") {
-    table = "harvest_lots";
-    payload = {
-      ...payload,
-      ...cleaned,
-      kilos: toNumber(values.kilos),
-      container_count: toNumber(values.container_count),
-      sale_price_per_kg: optionalNumber(values.sale_price_per_kg),
-      estimated_cost: optionalNumber(values.estimated_cost),
-      qr_code: values.lot_code ? `QR-${values.lot_code}` : null
-    };
-  } else if (view === "inventory") {
-    table = "inventory_items";
-    payload = { ...payload, ...cleaned, quantity: toNumber(values.quantity), min_quantity: toNumber(values.min_quantity), expires_at: values.expires_at || null };
-  } else if (view === "sipec") {
-    table = "sipec_declarations";
-    payload = { ...payload, ...cleaned, declared_apiaries: toNumber(values.declared_apiaries), declared_hives: toNumber(values.declared_hives) };
-  } else if (view === "reports") {
-    table = "export_jobs";
-    payload = { ...payload, ...cleaned, status: "queued" };
+  if (recordId) {
+    const { data, error } = await supabase.from(table).update(payload).eq("id", recordId).select("id").single();
+    if (error) throw error;
+    await logAudit(`update_${view}`, table, data.id as string);
+    return data.id as string;
   }
-
-  if (!table) throw new Error("Esta vista no tiene formulario de registro");
 
   const { data, error } = await supabase.from(table).insert(payload).select("id").single();
   if (error) throw error;
@@ -634,66 +613,247 @@ export async function saveRecordForView(view: ViewId, values: Record<string, str
   return data.id as string;
 }
 
+export async function deleteRecordForView(view: ViewId, recordId: string) {
+  const { table, softDeleteStatus } = getMutableTableForView(view);
+
+  if (softDeleteStatus) {
+    const { error } = await supabase.from(table).update({ status: softDeleteStatus }).eq("id", recordId);
+    if (error) throw error;
+    await logAudit(`archive_${view}`, table, recordId);
+    return;
+  }
+
+  const { error } = await supabase.from(table).delete().eq("id", recordId);
+  if (error) throw error;
+  await logAudit(`delete_${view}`, table, recordId);
+}
+
+function buildPayloadForView(view: ViewId, values: Record<string, string>, companyId: string): { table: string; payload: Record<string, unknown> } {
+  const cleaned = cleanValues(values);
+  const basePayload: Record<string, unknown> = { company_id: companyId };
+
+  if (view === "apiaries") {
+    return {
+      table: "apiaries",
+      payload: { ...basePayload, ...cleaned, activity: splitList(values.activity), hives_count: toNumber(values.hives_count), latitude: optionalNumber(values.latitude), longitude: optionalNumber(values.longitude) }
+    };
+  }
+
+  if (view === "hives") {
+    return {
+      table: "hives",
+      payload: { ...basePayload, ...cleaned, frames_count: optionalNumber(values.frames_count) }
+    };
+  }
+
+  if (view === "treatments") {
+    return {
+      table: "treatments",
+      payload: { ...basePayload, ...cleaned, hive_id: values.hive_id || null, withdrawal_until: values.withdrawal_until || null }
+    };
+  }
+
+  if (view === "biosecurity") {
+    return {
+      table: "biosecurity_events",
+      payload: { ...basePayload, ...cleaned, apiary_id: values.apiary_id || null, mortality_count: toNumber(values.mortality_count) }
+    };
+  }
+
+  if (view === "traceability") {
+    return {
+      table: "harvest_lots",
+      payload: {
+        ...basePayload,
+        ...cleaned,
+        kilos: toNumber(values.kilos),
+        container_count: toNumber(values.container_count),
+        sale_price_per_kg: optionalNumber(values.sale_price_per_kg),
+        estimated_cost: optionalNumber(values.estimated_cost),
+        qr_code: values.lot_code ? `QR-${values.lot_code}` : null
+      }
+    };
+  }
+
+  if (view === "inventory") {
+    return {
+      table: "inventory_items",
+      payload: { ...basePayload, ...cleaned, quantity: toNumber(values.quantity), min_quantity: toNumber(values.min_quantity), expires_at: values.expires_at || null }
+    };
+  }
+
+  if (view === "sipec") {
+    return {
+      table: "sipec_declarations",
+      payload: { ...basePayload, ...cleaned, declared_apiaries: toNumber(values.declared_apiaries), declared_hives: toNumber(values.declared_hives) }
+    };
+  }
+
+  if (view === "reports") {
+    return {
+      table: "export_jobs",
+      payload: { ...basePayload, ...cleaned, status: "queued" }
+    };
+  }
+
+  throw new Error("Esta vista no tiene formulario de registro");
+}
+
+function getMutableTableForView(view: ViewId) {
+  const mapping: Partial<Record<ViewId, { table: string; softDeleteStatus?: string }>> = {
+    apiaries: { table: "apiaries", softDeleteStatus: "archived" },
+    hives: { table: "hives", softDeleteStatus: "archived" },
+    treatments: { table: "treatments" },
+    biosecurity: { table: "biosecurity_events" },
+    traceability: { table: "harvest_lots", softDeleteStatus: "archived" },
+    inventory: { table: "inventory_items" },
+    reports: { table: "export_jobs" },
+    sipec: { table: "sipec_declarations" }
+  };
+  const config = mapping[view];
+  if (!config) throw new Error("Esta vista no permite eliminar registros");
+  return config;
+}
+
 export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
   const companyId = await getActiveCompanyId();
 
   if (view === "apiaries") {
-    const apiaryRows = await getApiaries();
-    const totalHives = apiaryRows.reduce((sum, item) => sum + item.hives, 0);
+    const { data } = await supabase
+      .from("apiaries")
+      .select("id, code, name, commune, region, latitude, longitude, activity, hives_count, health, notes, status")
+      .eq("company_id", companyId)
+      .neq("status", "archived")
+      .order("code");
+    const apiaryRows = (data ?? []) as Array<{ id: string; code: string; name: string; commune: string; region: string; latitude: number | null; longitude: number | null; activity: string[] | null; hives_count: number; health: HealthStatus; notes: string | null }>;
+    const totalHives = apiaryRows.reduce((sum, item) => sum + item.hives_count, 0);
     return {
       title: "Apiarios FRADA",
       source: "Supabase",
       cards: [[String(apiaryRows.length), "Apiarios activos", "Desde tabla apiaries"], [String(totalHives), "Colmenas", "Declarables"], ["100%", "Actividad", "Clasificada por rubro"]],
       headers: ["N apiario", "Nombre", "Comuna / region", "Coordenadas", "Actividad", "Colmenas"],
-      rows: apiaryRows.map((item) => [item.id, item.name, `${item.commune} / ${item.region}`, item.coordinates, item.activity, String(item.hives)])
+      rows: apiaryRows.map((item) => ({
+        id: item.id,
+        cells: [item.code, item.name, `${item.commune} / ${item.region}`, `${item.latitude ?? ""}, ${item.longitude ?? ""}`, (item.activity ?? []).join(", "), String(item.hives_count)],
+        values: {
+          code: item.code,
+          name: item.name,
+          commune: item.commune,
+          region: item.region,
+          latitude: String(item.latitude ?? ""),
+          longitude: String(item.longitude ?? ""),
+          activity: (item.activity ?? []).join(", "),
+          hives_count: String(item.hives_count),
+          health: item.health,
+          notes: item.notes ?? ""
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
   if (view === "hives") {
     const { data } = await supabase
       .from("hives")
-      .select("code, queen_status, brood_status, food_reserve, status, apiaries(name)")
+      .select("id, apiary_id, code, qr_code, queen_status, brood_status, food_reserve, frames_count, status, apiaries(name)")
       .eq("company_id", companyId)
+      .neq("status", "archived")
       .order("code");
-    const rows = (data ?? []) as unknown as Array<{ code: string; queen_status: string | null; brood_status: string | null; food_reserve: string | null; status: string; apiaries: { name: string } | null }>;
+    const rows = (data ?? []) as unknown as Array<{ id: string; apiary_id: string; code: string; qr_code: string | null; queen_status: string | null; brood_status: string | null; food_reserve: string | null; frames_count: number | null; status: string; apiaries: { name: string } | null }>;
     return {
       title: "Colmenas",
       source: "Supabase",
       cards: [[String(rows.length), "Total", "Registros en hives"], [String(rows.filter((item) => item.queen_status !== "Presente").length), "Revisar reina", "Seguimiento"], [String(rows.filter((item) => item.food_reserve === "Baja").length), "Baja reserva", "Alimentacion"]],
       headers: ["Codigo", "Apiario", "Reina", "Postura", "Alimento", "Estado"],
-      rows: rows.map((item) => [item.code, item.apiaries?.name ?? "Sin apiario", item.queen_status ?? "Sin dato", item.brood_status ?? "Sin dato", item.food_reserve ?? "Sin dato", item.status])
+      rows: rows.map((item) => ({
+        id: item.id,
+        cells: [item.code, item.apiaries?.name ?? "Sin apiario", item.queen_status ?? "Sin dato", item.brood_status ?? "Sin dato", item.food_reserve ?? "Sin dato", item.status],
+        values: {
+          apiary_id: item.apiary_id,
+          code: item.code,
+          qr_code: item.qr_code ?? "",
+          queen_status: item.queen_status ?? "",
+          brood_status: item.brood_status ?? "",
+          food_reserve: item.food_reserve ?? "",
+          frames_count: String(item.frames_count ?? ""),
+          status: item.status
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
   if (view === "treatments") {
-    const treatmentRows = await getTreatments();
+    const { data } = await supabase
+      .from("treatments")
+      .select("id, apiary_id, hive_id, diagnosis, medicine, active_ingredient, dose, batch, applied_at, withdrawal_until, responsible, status, notes, hives(code)")
+      .eq("company_id", companyId)
+      .order("applied_at", { ascending: false });
+    const treatmentRows = (data ?? []) as unknown as Array<{ id: string; apiary_id: string; hive_id: string | null; diagnosis: string; medicine: string; active_ingredient: string | null; dose: string; batch: string | null; applied_at: string; withdrawal_until: string | null; responsible: string | null; status: HealthStatus; notes: string | null; hives: { code: string } | null }>;
     return {
       title: "Tratamientos",
       source: "Supabase",
-      cards: [[String(treatmentRows.filter((item) => item.status !== "ok").length), "Alertas", "Desde treatments"], [`${percentage(treatmentRows.filter((item) => item.batch).length, treatmentRows.length)}%`, "Con lote", "Trazabilidad"], [String(treatmentRows.filter((item) => item.withdrawal !== "Sin retiro").length), "Con retiro", "Control sanitario"]],
+      cards: [[String(treatmentRows.filter((item) => item.status !== "ok").length), "Alertas", "Desde treatments"], [`${percentage(treatmentRows.filter((item) => item.batch).length, treatmentRows.length)}%`, "Con lote", "Trazabilidad"], [String(treatmentRows.filter((item) => item.withdrawal_until).length), "Con retiro", "Control sanitario"]],
       headers: ["Diagnostico", "Colmena", "Medicamento", "Dosis", "Lote", "Retiro"],
-      rows: treatmentRows.map((item) => [item.diagnosis, item.hive, item.medicine, item.dose, item.batch, item.withdrawal])
+      rows: treatmentRows.map((item) => ({
+        id: item.id,
+        cells: [item.diagnosis, item.hives?.code ?? "Apiario completo", item.medicine, item.dose, item.batch ?? "", item.withdrawal_until ? formatDate(item.withdrawal_until) : "Sin retiro"],
+        values: {
+          apiary_id: item.apiary_id,
+          hive_id: item.hive_id ?? "",
+          diagnosis: item.diagnosis,
+          medicine: item.medicine,
+          active_ingredient: item.active_ingredient ?? "",
+          dose: item.dose,
+          batch: item.batch ?? "",
+          applied_at: item.applied_at,
+          withdrawal_until: item.withdrawal_until ?? "",
+          responsible: item.responsible ?? "",
+          status: item.status,
+          notes: item.notes ?? ""
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
   if (view === "biosecurity") {
     const { data } = await supabase
       .from("biosecurity_events")
-      .select("event_type, event_at, action_taken, mortality_count, priority, notes, apiaries(name)")
+      .select("id, apiary_id, event_type, event_at, material, action_taken, mortality_count, suspected_cause, priority, notes, apiaries(name)")
       .eq("company_id", companyId)
       .order("event_at", { ascending: false });
-    const rows = (data ?? []) as unknown as Array<{ event_type: string; event_at: string; action_taken: string | null; mortality_count: number; priority: string; notes: string | null; apiaries: { name: string } | null }>;
+    const rows = (data ?? []) as unknown as Array<{ id: string; apiary_id: string | null; event_type: string; event_at: string; material: string | null; action_taken: string | null; mortality_count: number; suspected_cause: string | null; priority: string; notes: string | null; apiaries: { name: string } | null }>;
     return {
       title: "Bioseguridad y mortalidad",
       source: "Supabase",
       cards: [[String(rows.length), "Registros", "Desde biosecurity_events"], [String(rows.filter((item) => item.mortality_count > 0).length), "Mortalidad", "Seguimiento"], [String(rows.reduce((sum, item) => sum + item.mortality_count, 0)), "Bajas", "Reportadas"]],
       headers: ["Registro", "Apiario", "Fecha", "Estado", "Observacion"],
-      rows: rows.map((item) => [item.event_type, item.apiaries?.name ?? "Sin apiario", formatDate(item.event_at), item.priority, item.notes ?? item.action_taken ?? "Sin observacion"])
+      rows: rows.map((item) => ({
+        id: item.id,
+        cells: [item.event_type, item.apiaries?.name ?? "General empresa", formatDate(item.event_at), item.priority, item.notes ?? item.action_taken ?? "Sin observacion"],
+        values: {
+          apiary_id: item.apiary_id ?? "",
+          event_type: item.event_type,
+          event_at: item.event_at,
+          material: item.material ?? "",
+          action_taken: item.action_taken ?? "",
+          mortality_count: String(item.mortality_count),
+          suspected_cause: item.suspected_cause ?? "",
+          priority: item.priority,
+          notes: item.notes ?? ""
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
   if (view === "traceability") {
-    const lots = await getHarvestLots() as Array<{ lot_code: string; product: string; kilos: number; container_count: number; sale_price_per_kg: number | null; estimated_cost: number | null; status: string }>;
+    const lots = await getHarvestLots() as Array<{ id: string; lot_code: string; harvest_date: string; product: string; kilos: number; container_count: number; sale_price_per_kg: number | null; estimated_cost: number | null; status: string; notes: string | null }>;
     const firstLot = lots[0];
     const projectedIncome = lots.reduce((sum, lot) => sum + Number(lot.kilos ?? 0) * Number(lot.sale_price_per_kg ?? 0), 0);
     return {
@@ -701,18 +861,49 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
       source: "Supabase",
       cards: [[firstLot?.lot_code ?? "Sin lote", "Lote", "Desde harvest_lots"], [`${sumNumber(lots, "kilos")} kg`, "Cosecha", "Total registrada"], [formatCurrency(projectedIncome), "Venta potencial", "Precio por kg"]],
       headers: ["Lote", "Producto", "Kilos", "Envases", "Estado"],
-      rows: lots.map((item) => [item.lot_code, item.product, `${item.kilos} kg`, String(item.container_count), item.status])
+      rows: lots.map((item) => ({
+        id: item.id,
+        cells: [item.lot_code, item.product, `${item.kilos} kg`, String(item.container_count), item.status],
+        values: {
+          lot_code: item.lot_code,
+          harvest_date: item.harvest_date,
+          product: item.product,
+          kilos: String(item.kilos),
+          container_count: String(item.container_count),
+          sale_price_per_kg: String(item.sale_price_per_kg ?? ""),
+          estimated_cost: String(item.estimated_cost ?? ""),
+          status: item.status,
+          notes: item.notes ?? ""
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
   if (view === "inventory") {
-    const items = await getInventoryItems() as Array<{ name: string; quantity: number; min_quantity: number; unit: string; location: string | null }>;
+    const items = await getInventoryItems() as Array<{ id: string; name: string; category: string; quantity: number; min_quantity: number; unit: string; batch: string | null; expires_at: string | null; location: string | null }>;
     return {
       title: "Inventario",
       source: "Supabase",
       cards: [[String(items.length), "Insumos", "Desde inventory_items"], [String(items.filter((item) => Number(item.quantity) <= Number(item.min_quantity)).length), "Bajo minimo", "Alertas de stock"], [String(sumNumber(items, "quantity")), "Stock total", "Unidades mixtas"]],
       headers: ["Insumo", "Stock", "Minimo", "Ubicacion", "Estado"],
-      rows: items.map((item) => [item.name, `${item.quantity} ${item.unit}`, `${item.min_quantity} ${item.unit}`, item.location ?? "Sin ubicacion", Number(item.quantity) <= Number(item.min_quantity) ? "Bajo" : "OK"])
+      rows: items.map((item) => ({
+        id: item.id,
+        cells: [item.name, `${item.quantity} ${item.unit}`, `${item.min_quantity} ${item.unit}`, item.location ?? "Sin ubicacion", Number(item.quantity) <= Number(item.min_quantity) ? "Bajo" : "OK"],
+        values: {
+          name: item.name,
+          category: item.category,
+          unit: item.unit,
+          quantity: String(item.quantity),
+          min_quantity: String(item.min_quantity),
+          batch: item.batch ?? "",
+          expires_at: item.expires_at ?? "",
+          location: item.location ?? ""
+        },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
@@ -722,24 +913,44 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
       title: "Declaracion SIPEC / Octubre",
       source: "Supabase",
       cards: [[data?.declaration_month ?? "Octubre", "Ventana anual", "Declaracion"], [String(data?.declared_apiaries ?? 0), "Apiarios", "Declarados"], [String(data?.declared_hives ?? 0), "Colmenas", "Declaradas"]],
-      headers: ["Campo", "Valor"],
-      rows: [["Temporada", data?.season ?? "Sin declaracion"], ["Estado", data?.status ?? "Borrador"], ["Notas", data?.notes ?? "Sin notas"], ["Respaldo", data?.backup_url ?? "Pendiente"]]
+      headers: ["Campo", "Valor", "Campo", "Valor", "Notas"],
+      rows: data ? [{
+        id: data.id,
+        cells: ["Temporada", data.season ?? "Sin declaracion", "Estado", data.status ?? "Borrador", data.notes ?? "Sin notas"],
+        values: {
+          season: data.season ?? "",
+          declaration_month: data.declaration_month ?? "Octubre",
+          declared_apiaries: String(data.declared_apiaries ?? 0),
+          declared_hives: String(data.declared_hives ?? 0),
+          status: data.status ?? "draft",
+          backup_url: data.backup_url ?? "",
+          notes: data.notes ?? ""
+        },
+        editable: true,
+        deletable: true
+      }] : []
     };
   }
 
   if (view === "reports") {
     const { data } = await supabase
       .from("export_jobs")
-      .select("export_type, created_at, status, file_url")
+      .select("id, requested_by, export_type, module, created_at, status, file_url")
       .eq("company_id", companyId)
       .order("created_at", { ascending: false });
-    const rows = (data ?? []) as Array<{ export_type: string; created_at: string; status: string; file_url: string | null }>;
+    const rows = (data ?? []) as Array<{ id: string; requested_by: string | null; export_type: string; module: string; created_at: string; status: string; file_url: string | null }>;
     return {
       title: "Reportes PDF/Excel",
       source: "Supabase",
       cards: [[String(rows.length), "Respaldos", "Desde export_jobs"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("pdf")).length), "PDF", "Generados"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("excel")).length), "Excel", "Generados"]],
       headers: ["Reporte", "Fecha", "Formato", "Archivo", "Estado"],
-      rows: rows.map((item) => [item.export_type, formatDate(item.created_at), item.export_type.toUpperCase().includes("PDF") ? "PDF" : "Excel", item.file_url ?? "Pendiente", item.status])
+      rows: rows.map((item) => ({
+        id: item.id,
+        cells: [item.export_type, formatDate(item.created_at), item.export_type.toUpperCase().includes("PDF") ? "PDF" : "Excel", item.file_url ?? "Pendiente", item.status],
+        values: { export_type: item.export_type, module: item.module, requested_by: item.requested_by ?? "" },
+        editable: true,
+        deletable: true
+      }))
     };
   }
 
@@ -750,7 +961,7 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
       source: "Supabase",
       cards: [[profile?.sagCode || "SAG", "Registro", "companies.sag_code"], [profile?.taxId || "Sin RUT", "RUT", "Empresa"], [profile?.region || "Sin region", "Region", "Principal"]],
       headers: ["Campo", "Valor"],
-      rows: [["RUT", profile?.taxId ?? ""], ["Responsable", profile?.ownerName ?? ""], ["Razon social", profile?.companyName ?? ""], ["Region", profile?.region ?? ""], ["Giro", profile?.businessLine ?? ""]]
+      rows: [["RUT", profile?.taxId ?? ""], ["Responsable", profile?.ownerName ?? ""], ["Razon social", profile?.companyName ?? ""], ["Region", profile?.region ?? ""], ["Giro", profile?.businessLine ?? ""]].map((cells, index) => ({ id: `profile-${index}`, cells }))
     };
   }
 
@@ -759,7 +970,7 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
     source: "Configuracion",
     cards: [["Alta", "Campo", "Inspeccion rapida"], ["Alta", "SAG/SIPEC", "Respaldo"], ["Media", "Ventas", "Pipeline"]],
     headers: ["Prioridad", "Modulo", "Estado", "Siguiente paso"],
-    rows: [["Alta", "Apiarios FRADA", "Con BD", "Agregar formulario CRUD"], ["Alta", "Tratamientos", "Con BD", "Crear formulario sanitario"], ["Media", "Ventas", "Con BD", "Editar estados pipeline"]]
+    rows: [["Alta", "Apiarios FRADA", "Con BD", "Agregar formulario CRUD"], ["Alta", "Tratamientos", "Con BD", "Crear formulario sanitario"], ["Media", "Ventas", "Con BD", "Editar estados pipeline"]].map((cells, index) => ({ id: `priority-${index}`, cells }))
   };
 }
 

@@ -8,7 +8,7 @@ Migracion aplicada: `20260522201444_create_apigestor_core_schema`
 
 - `companies`: cuenta empresa, marca, datos SAG/FRADA y facturacion.
 - `company_members`: usuarios y roles por empresa.
-- `apiaries`: apiarios con comuna, region, coordenadas, actividad apicola y salud.
+- `apiaries`: apiarios con comuna, region, coordenadas, actividad apicola, salud y estado para archivar.
 - `hives`: colmenas, QR, estado de reina, cria, reservas y marcos.
 - `inspections`: inspecciones sanitarias con prioridad y seguimiento.
 - `inspection_checklist_items`: checklist tecnico por inspeccion.
