@@ -1,6 +1,6 @@
 import { supabase } from "./supabase-client";
 import { apiaries as fallbackApiaries, inspections as fallbackInspections, treatments as fallbackTreatments } from "./mock-data";
-import type { Apiary, BrandIcon, CompanyProfile, HealthStatus, Inspection, Treatment } from "./types";
+import type { Apiary, BrandIcon, CompanyProfile, HealthStatus, Inspection, Treatment, ViewId } from "./types";
 
 const demoCompanyId = "00000000-0000-4000-8000-000000000001";
 
@@ -72,6 +72,14 @@ export type DashboardStats = {
     watch: number;
     risk: number;
   };
+};
+
+export type RecordViewData = {
+  title: string;
+  cards: Array<[string, string, string]>;
+  headers: string[];
+  rows: string[][];
+  source: "Supabase" | "Configuracion";
 };
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
@@ -332,6 +340,147 @@ export async function getInventoryItems() {
     .order("name");
 
   return data ?? [];
+}
+
+export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
+  const companyId = await getActiveCompanyId();
+
+  if (view === "apiaries") {
+    const apiaryRows = await getApiaries();
+    const totalHives = apiaryRows.reduce((sum, item) => sum + item.hives, 0);
+    return {
+      title: "Apiarios FRADA",
+      source: "Supabase",
+      cards: [[String(apiaryRows.length), "Apiarios activos", "Desde tabla apiaries"], [String(totalHives), "Colmenas", "Declarables"], ["100%", "Actividad", "Clasificada por rubro"]],
+      headers: ["N apiario", "Nombre", "Comuna / region", "Coordenadas", "Actividad", "Colmenas"],
+      rows: apiaryRows.map((item) => [item.id, item.name, `${item.commune} / ${item.region}`, item.coordinates, item.activity, String(item.hives)])
+    };
+  }
+
+  if (view === "hives") {
+    const { data } = await supabase
+      .from("hives")
+      .select("code, queen_status, brood_status, food_reserve, status, apiaries(name)")
+      .eq("company_id", companyId)
+      .order("code");
+    const rows = (data ?? []) as unknown as Array<{ code: string; queen_status: string | null; brood_status: string | null; food_reserve: string | null; status: string; apiaries: { name: string } | null }>;
+    return {
+      title: "Colmenas",
+      source: "Supabase",
+      cards: [[String(rows.length), "Total", "Registros en hives"], [String(rows.filter((item) => item.queen_status !== "Presente").length), "Revisar reina", "Seguimiento"], [String(rows.filter((item) => item.food_reserve === "Baja").length), "Baja reserva", "Alimentacion"]],
+      headers: ["Codigo", "Apiario", "Reina", "Postura", "Alimento", "Estado"],
+      rows: rows.map((item) => [item.code, item.apiaries?.name ?? "Sin apiario", item.queen_status ?? "Sin dato", item.brood_status ?? "Sin dato", item.food_reserve ?? "Sin dato", item.status])
+    };
+  }
+
+  if (view === "treatments") {
+    const treatmentRows = await getTreatments();
+    return {
+      title: "Tratamientos",
+      source: "Supabase",
+      cards: [[String(treatmentRows.filter((item) => item.status !== "ok").length), "Alertas", "Desde treatments"], [`${percentage(treatmentRows.filter((item) => item.batch).length, treatmentRows.length)}%`, "Con lote", "Trazabilidad"], [String(treatmentRows.filter((item) => item.withdrawal !== "Sin retiro").length), "Con retiro", "Control sanitario"]],
+      headers: ["Diagnostico", "Colmena", "Medicamento", "Dosis", "Lote", "Retiro"],
+      rows: treatmentRows.map((item) => [item.diagnosis, item.hive, item.medicine, item.dose, item.batch, item.withdrawal])
+    };
+  }
+
+  if (view === "biosecurity") {
+    const { data } = await supabase
+      .from("biosecurity_events")
+      .select("event_type, event_at, action_taken, mortality_count, priority, notes, apiaries(name)")
+      .eq("company_id", companyId)
+      .order("event_at", { ascending: false });
+    const rows = (data ?? []) as unknown as Array<{ event_type: string; event_at: string; action_taken: string | null; mortality_count: number; priority: string; notes: string | null; apiaries: { name: string } | null }>;
+    return {
+      title: "Bioseguridad y mortalidad",
+      source: "Supabase",
+      cards: [[String(rows.length), "Registros", "Desde biosecurity_events"], [String(rows.filter((item) => item.mortality_count > 0).length), "Mortalidad", "Seguimiento"], [String(rows.reduce((sum, item) => sum + item.mortality_count, 0)), "Bajas", "Reportadas"]],
+      headers: ["Registro", "Apiario", "Fecha", "Estado", "Observacion"],
+      rows: rows.map((item) => [item.event_type, item.apiaries?.name ?? "Sin apiario", formatDate(item.event_at), item.priority, item.notes ?? item.action_taken ?? "Sin observacion"])
+    };
+  }
+
+  if (view === "traceability") {
+    const lots = await getHarvestLots() as Array<{ lot_code: string; product: string; kilos: number; container_count: number; sale_price_per_kg: number | null; estimated_cost: number | null; status: string }>;
+    const firstLot = lots[0];
+    const projectedIncome = lots.reduce((sum, lot) => sum + Number(lot.kilos ?? 0) * Number(lot.sale_price_per_kg ?? 0), 0);
+    return {
+      title: "Trazabilidad",
+      source: "Supabase",
+      cards: [[firstLot?.lot_code ?? "Sin lote", "Lote", "Desde harvest_lots"], [`${sumNumber(lots, "kilos")} kg`, "Cosecha", "Total registrada"], [formatCurrency(projectedIncome), "Venta potencial", "Precio por kg"]],
+      headers: ["Lote", "Producto", "Kilos", "Envases", "Estado"],
+      rows: lots.map((item) => [item.lot_code, item.product, `${item.kilos} kg`, String(item.container_count), item.status])
+    };
+  }
+
+  if (view === "inventory") {
+    const items = await getInventoryItems() as Array<{ name: string; quantity: number; min_quantity: number; unit: string; location: string | null }>;
+    return {
+      title: "Inventario",
+      source: "Supabase",
+      cards: [[String(items.length), "Insumos", "Desde inventory_items"], [String(items.filter((item) => Number(item.quantity) <= Number(item.min_quantity)).length), "Bajo minimo", "Alertas de stock"], [String(sumNumber(items, "quantity")), "Stock total", "Unidades mixtas"]],
+      headers: ["Insumo", "Stock", "Minimo", "Ubicacion", "Estado"],
+      rows: items.map((item) => [item.name, `${item.quantity} ${item.unit}`, `${item.min_quantity} ${item.unit}`, item.location ?? "Sin ubicacion", Number(item.quantity) <= Number(item.min_quantity) ? "Bajo" : "OK"])
+    };
+  }
+
+  if (view === "sipec") {
+    const { data } = await supabase.from("sipec_declarations").select("*").eq("company_id", companyId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+    return {
+      title: "Declaracion SIPEC / Octubre",
+      source: "Supabase",
+      cards: [[data?.declaration_month ?? "Octubre", "Ventana anual", "Declaracion"], [String(data?.declared_apiaries ?? 0), "Apiarios", "Declarados"], [String(data?.declared_hives ?? 0), "Colmenas", "Declaradas"]],
+      headers: ["Campo", "Valor"],
+      rows: [["Temporada", data?.season ?? "Sin declaracion"], ["Estado", data?.status ?? "Borrador"], ["Notas", data?.notes ?? "Sin notas"], ["Respaldo", data?.backup_url ?? "Pendiente"]]
+    };
+  }
+
+  if (view === "reports") {
+    const { data } = await supabase
+      .from("export_jobs")
+      .select("export_type, requested_at, status, file_url")
+      .eq("company_id", companyId)
+      .order("requested_at", { ascending: false });
+    const rows = (data ?? []) as Array<{ export_type: string; requested_at: string; status: string; file_url: string | null }>;
+    return {
+      title: "Reportes PDF/Excel",
+      source: "Supabase",
+      cards: [[String(rows.length), "Respaldos", "Desde export_jobs"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("pdf")).length), "PDF", "Generados"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("excel")).length), "Excel", "Generados"]],
+      headers: ["Reporte", "Fecha", "Formato", "Archivo", "Estado"],
+      rows: rows.map((item) => [item.export_type, formatDate(item.requested_at), item.export_type.toUpperCase().includes("PDF") ? "PDF" : "Excel", item.file_url ?? "Pendiente", item.status])
+    };
+  }
+
+  if (view === "sagProfile") {
+    const profile = await getCompanyProfile();
+    return {
+      title: "Perfil Apicultor SAG",
+      source: "Supabase",
+      cards: [[profile?.sagCode || "SAG", "Registro", "companies.sag_code"], [profile?.taxId || "Sin RUT", "RUT", "Empresa"], [profile?.region || "Sin region", "Region", "Principal"]],
+      headers: ["Campo", "Valor"],
+      rows: [["RUT", profile?.taxId ?? ""], ["Responsable", profile?.ownerName ?? ""], ["Razon social", profile?.companyName ?? ""], ["Region", profile?.region ?? ""], ["Giro", profile?.businessLine ?? ""]]
+    };
+  }
+
+  return {
+    title: "Prioridades",
+    source: "Configuracion",
+    cards: [["Alta", "Campo", "Inspeccion rapida"], ["Alta", "SAG/SIPEC", "Respaldo"], ["Media", "Ventas", "Pipeline"]],
+    headers: ["Prioridad", "Modulo", "Estado", "Siguiente paso"],
+    rows: [["Alta", "Apiarios FRADA", "Con BD", "Agregar formulario CRUD"], ["Alta", "Tratamientos", "Con BD", "Crear formulario sanitario"], ["Media", "Ventas", "Con BD", "Editar estados pipeline"]]
+  };
+}
+
+function percentage(value: number, total: number) {
+  return total ? Math.round((value / total) * 100) : 0;
+}
+
+function sumNumber<T extends Record<string, unknown>>(items: T[], key: keyof T) {
+  return items.reduce((sum, item) => sum + Number(item[key] ?? 0), 0);
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" }).format(value);
 }
 
 function formatDate(value: string) {

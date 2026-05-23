@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FloatingActions } from "./FloatingActions";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { LoginScreen } from "@/features/auth/LoginScreen";
@@ -148,7 +147,6 @@ export function AppShell() {
         />
         {content}
       </main>
-      <FloatingActions onNavigate={setActiveView} onToast={showToast} />
       <div className={`toast ${toast ? "show" : ""}`}>{toast}</div>
     </>
   );
