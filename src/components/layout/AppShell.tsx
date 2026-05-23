@@ -14,7 +14,7 @@ import { SalesView } from "@/features/sales/SalesView";
 import { SettingsView } from "@/features/settings/SettingsView";
 import { getCurrentSession, onAuthChange, signOut } from "@/lib/auth";
 import { navItems } from "@/lib/mock-data";
-import { getCompanyModuleIcons, getCompanyProfile } from "@/lib/supabase-data";
+import { createExportJob, getCompanyModuleIcons, getCompanyProfile } from "@/lib/supabase-data";
 import type { CompanyProfile, ViewId } from "@/lib/types";
 
 const viewMeta: Record<ViewId, { title: string; eyebrow: string }> = {
@@ -101,9 +101,9 @@ export function AppShell() {
       case "dashboard":
         return <DashboardView onToast={showToast} />;
       case "field":
-        return <FieldHub onNavigate={setActiveView} onToast={showToast} />;
+        return <FieldHub onNavigate={setActiveView} />;
       case "production":
-        return <ProductionHub onNavigate={setActiveView} onToast={showToast} />;
+        return <ProductionHub onNavigate={setActiveView} />;
       case "sales":
         return <SalesView onToast={showToast} />;
       case "compliance":
@@ -132,6 +132,15 @@ export function AppShell() {
     }
   }
 
+  async function handleExport() {
+    try {
+      const id = await createExportJob(activeView, "pdf");
+      showToast(`Exportacion registrada en Supabase: ${id.slice(0, 8)}`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "No se pudo registrar exportacion");
+    }
+  }
+
   return (
     <>
       {!loggedIn && <LoginScreen company={company} onLogin={() => setLoggedIn(true)} onToast={showToast} />}
@@ -140,7 +149,7 @@ export function AppShell() {
         <Topbar
           company={company}
           eyebrow={meta.eyebrow}
-          onExport={() => showToast(`Exportando respaldo de ${meta.title}`)}
+          onExport={() => void handleExport()}
           onLogout={handleLogout}
           onNewInspection={() => setActiveView("inspections")}
           title={meta.title}

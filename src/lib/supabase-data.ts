@@ -82,6 +82,22 @@ export type RecordViewData = {
   source: "Supabase" | "Configuracion";
 };
 
+export type RecordFormField = {
+  name: string;
+  label: string;
+  type: "text" | "number" | "date" | "select" | "textarea";
+  required?: boolean;
+  options?: Array<{ label: string; value: string }>;
+  placeholder?: string;
+};
+
+export type RecordFormConfig = {
+  title: string;
+  submitLabel: string;
+  fields: RecordFormField[];
+  initialValues: Record<string, string>;
+};
+
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
   const companyId = await getActiveCompanyId();
   const { data, error } = await supabase.from("companies").select("*").eq("id", companyId).single();
@@ -320,6 +336,40 @@ export async function getSalesOrders() {
   return data ?? [];
 }
 
+export type SaveSaleInput = {
+  customerName: string;
+  customerChannel: string;
+  product: string;
+  quantity: string;
+  unitPrice: string;
+  totalAmount: string;
+  status: string;
+  notes: string;
+};
+
+export async function saveSalesOrder(input: SaveSaleInput) {
+  const companyId = await getActiveCompanyId();
+  const { data, error } = await supabase
+    .from("sales_orders")
+    .insert({
+      company_id: companyId,
+      customer_name: input.customerName,
+      customer_channel: input.customerChannel || null,
+      product: input.product,
+      quantity: input.quantity,
+      unit_price: optionalNumber(input.unitPrice),
+      total_amount: optionalNumber(input.totalAmount),
+      status: input.status,
+      notes: input.notes || null
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  await logAudit("create_sales_order", "sales_orders", data.id as string);
+  return data.id as string;
+}
+
 export async function getHarvestLots() {
   const companyId = await getActiveCompanyId();
   const { data } = await supabase
@@ -340,6 +390,248 @@ export async function getInventoryItems() {
     .order("name");
 
   return data ?? [];
+}
+
+export async function createExportJob(module: string, exportType: "pdf" | "excel" | "zip" = "pdf") {
+  const companyId = await getActiveCompanyId();
+  const { data: sessionData } = await supabase.auth.getSession();
+  const { data, error } = await supabase
+    .from("export_jobs")
+    .insert({
+      company_id: companyId,
+      requested_by: sessionData.session?.user.email ?? "Usuario demo",
+      export_type: exportType,
+      module,
+      status: "queued"
+    })
+    .select("id")
+    .single();
+
+  if (error) throw error;
+  return data.id as string;
+}
+
+export async function getRecordFormConfig(view: ViewId): Promise<RecordFormConfig | null> {
+  const { apiaries, hives } = await getInspectionFormData();
+  const apiaryOptions = apiaries.map((apiary) => ({ label: apiary.name, value: apiary.id }));
+  const hiveOptions = [{ label: "Apiario completo", value: "" }, ...hives.map((hive) => ({ label: hive.code, value: hive.id }))];
+  const today = new Date().toISOString().slice(0, 10);
+
+  const baseSelects = {
+    health: [
+      { label: "Buena", value: "ok" },
+      { label: "Revision", value: "watch" },
+      { label: "Critica", value: "risk" }
+    ],
+    priority: [
+      { label: "Baja", value: "low" },
+      { label: "Media", value: "medium" },
+      { label: "Alta", value: "high" },
+      { label: "Urgente", value: "urgent" }
+    ],
+    recordStatus: [
+      { label: "Borrador", value: "draft" },
+      { label: "Activo", value: "active" },
+      { label: "Cerrado", value: "closed" },
+      { label: "Archivado", value: "archived" }
+    ]
+  };
+
+  if (view === "apiaries") {
+    return {
+      title: "Nuevo apiario FRADA",
+      submitLabel: "Guardar apiario",
+      initialValues: { code: nextCode("API"), name: "", commune: "", region: "Nuble", latitude: "", longitude: "", activity: "Miel", hives_count: "0", health: "ok", notes: "" },
+      fields: [
+        { name: "code", label: "Codigo", type: "text", required: true },
+        { name: "name", label: "Nombre apiario", type: "text", required: true },
+        { name: "commune", label: "Comuna", type: "text", required: true },
+        { name: "region", label: "Region", type: "text", required: true },
+        { name: "latitude", label: "Latitud WGS-84", type: "number" },
+        { name: "longitude", label: "Longitud WGS-84", type: "number" },
+        { name: "activity", label: "Actividad apicola", type: "text", placeholder: "Miel, cera, polinizacion" },
+        { name: "hives_count", label: "Colmenas declarables", type: "number", required: true },
+        { name: "health", label: "Salud", type: "select", options: baseSelects.health },
+        { name: "notes", label: "Notas", type: "textarea" }
+      ]
+    };
+  }
+
+  if (view === "hives") {
+    return {
+      title: "Nueva colmena",
+      submitLabel: "Guardar colmena",
+      initialValues: { apiary_id: apiaryOptions[0]?.value ?? "", code: nextCode("COL"), qr_code: "", queen_status: "Presente", brood_status: "Normal", food_reserve: "Media", frames_count: "10", status: "active" },
+      fields: [
+        { name: "apiary_id", label: "Apiario", type: "select", required: true, options: apiaryOptions },
+        { name: "code", label: "Codigo colmena", type: "text", required: true },
+        { name: "qr_code", label: "QR/NFC", type: "text", placeholder: "QR-COL-001" },
+        { name: "queen_status", label: "Reina", type: "text" },
+        { name: "brood_status", label: "Cria / postura", type: "text" },
+        { name: "food_reserve", label: "Reserva alimento", type: "text" },
+        { name: "frames_count", label: "Marcos", type: "number" },
+        { name: "status", label: "Estado", type: "select", options: baseSelects.recordStatus }
+      ]
+    };
+  }
+
+  if (view === "treatments") {
+    return {
+      title: "Nuevo tratamiento",
+      submitLabel: "Guardar tratamiento",
+      initialValues: { apiary_id: apiaryOptions[0]?.value ?? "", hive_id: "", diagnosis: "Varroa destructor", medicine: "", active_ingredient: "", dose: "", batch: "", applied_at: today, withdrawal_until: "", responsible: "", status: "watch", notes: "" },
+      fields: [
+        { name: "apiary_id", label: "Apiario", type: "select", required: true, options: apiaryOptions },
+        { name: "hive_id", label: "Colmena", type: "select", options: hiveOptions },
+        { name: "diagnosis", label: "Diagnostico", type: "text", required: true },
+        { name: "medicine", label: "Medicamento", type: "text", required: true },
+        { name: "active_ingredient", label: "Principio activo", type: "text" },
+        { name: "dose", label: "Dosis", type: "text", required: true },
+        { name: "batch", label: "Lote medicamento", type: "text" },
+        { name: "applied_at", label: "Fecha aplicacion", type: "date", required: true },
+        { name: "withdrawal_until", label: "Retiro / carencia", type: "date" },
+        { name: "responsible", label: "Responsable", type: "text" },
+        { name: "status", label: "Estado sanitario", type: "select", options: baseSelects.health },
+        { name: "notes", label: "Notas", type: "textarea" }
+      ]
+    };
+  }
+
+  if (view === "biosecurity") {
+    return {
+      title: "Nuevo evento de bioseguridad",
+      submitLabel: "Guardar evento",
+      initialValues: { apiary_id: apiaryOptions[0]?.value ?? "", event_type: "Limpieza", event_at: today, material: "", action_taken: "", mortality_count: "0", suspected_cause: "", priority: "medium", notes: "" },
+      fields: [
+        { name: "apiary_id", label: "Apiario", type: "select", options: [{ label: "General empresa", value: "" }, ...apiaryOptions] },
+        { name: "event_type", label: "Tipo registro", type: "text", required: true },
+        { name: "event_at", label: "Fecha", type: "date", required: true },
+        { name: "material", label: "Material involucrado", type: "text" },
+        { name: "action_taken", label: "Accion tomada", type: "text" },
+        { name: "mortality_count", label: "Mortalidad observada", type: "number" },
+        { name: "suspected_cause", label: "Causa sospechada", type: "text" },
+        { name: "priority", label: "Prioridad", type: "select", options: baseSelects.priority },
+        { name: "notes", label: "Observacion", type: "textarea" }
+      ]
+    };
+  }
+
+  if (view === "traceability") {
+    return {
+      title: "Nuevo lote trazable",
+      submitLabel: "Crear lote",
+      initialValues: { lot_code: `M${new Date().getFullYear()}-${String(Date.now()).slice(-3)}`, harvest_date: today, product: "Miel multifloral", kilos: "0", container_count: "0", sale_price_per_kg: "4800", estimated_cost: "0", status: "active", notes: "" },
+      fields: [
+        { name: "lot_code", label: "Codigo lote", type: "text", required: true },
+        { name: "harvest_date", label: "Fecha cosecha", type: "date", required: true },
+        { name: "product", label: "Producto", type: "text", required: true },
+        { name: "kilos", label: "Kilos", type: "number", required: true },
+        { name: "container_count", label: "Envases", type: "number" },
+        { name: "sale_price_per_kg", label: "Precio por kg", type: "number" },
+        { name: "estimated_cost", label: "Costo estimado", type: "number" },
+        { name: "status", label: "Estado", type: "select", options: baseSelects.recordStatus },
+        { name: "notes", label: "Notas", type: "textarea" }
+      ]
+    };
+  }
+
+  if (view === "inventory") {
+    return {
+      title: "Nuevo item de inventario",
+      submitLabel: "Guardar item",
+      initialValues: { name: "", category: "Envases", unit: "un", quantity: "0", min_quantity: "0", batch: "", expires_at: "", location: "" },
+      fields: [
+        { name: "name", label: "Insumo", type: "text", required: true },
+        { name: "category", label: "Categoria", type: "text", required: true },
+        { name: "unit", label: "Unidad", type: "text", required: true },
+        { name: "quantity", label: "Stock", type: "number", required: true },
+        { name: "min_quantity", label: "Minimo", type: "number" },
+        { name: "batch", label: "Lote", type: "text" },
+        { name: "expires_at", label: "Vencimiento", type: "date" },
+        { name: "location", label: "Ubicacion", type: "text" }
+      ]
+    };
+  }
+
+  if (view === "sipec") {
+    return {
+      title: "Nueva declaracion SIPEC",
+      submitLabel: "Guardar declaracion",
+      initialValues: { season: "2025/2026", declaration_month: "Octubre", declared_apiaries: String(apiaryOptions.length), declared_hives: "0", status: "draft", backup_url: "", notes: "" },
+      fields: [
+        { name: "season", label: "Temporada", type: "text", required: true },
+        { name: "declaration_month", label: "Mes declaracion", type: "text", required: true },
+        { name: "declared_apiaries", label: "Apiarios declarados", type: "number" },
+        { name: "declared_hives", label: "Colmenas declaradas", type: "number" },
+        { name: "status", label: "Estado", type: "select", options: ["draft", "ready", "submitted", "observed", "accepted"].map((status) => ({ label: status, value: status })) },
+        { name: "backup_url", label: "URL respaldo", type: "text" },
+        { name: "notes", label: "Notas", type: "textarea" }
+      ]
+    };
+  }
+
+  if (view === "reports") {
+    return {
+      title: "Nueva exportacion",
+      submitLabel: "Solicitar respaldo",
+      initialValues: { export_type: "pdf", module: "sag_sipec", requested_by: "" },
+      fields: [
+        { name: "export_type", label: "Formato", type: "select", required: true, options: [{ label: "PDF", value: "pdf" }, { label: "Excel", value: "excel" }, { label: "ZIP", value: "zip" }] },
+        { name: "module", label: "Modulo", type: "text", required: true },
+        { name: "requested_by", label: "Solicitado por", type: "text" }
+      ]
+    };
+  }
+
+  return null;
+}
+
+export async function saveRecordForView(view: ViewId, values: Record<string, string>) {
+  const companyId = await getActiveCompanyId();
+  const cleaned = cleanValues(values);
+  let table = "";
+  let payload: Record<string, unknown> = { company_id: companyId };
+
+  if (view === "apiaries") {
+    table = "apiaries";
+    payload = { ...payload, ...cleaned, activity: splitList(values.activity), hives_count: toNumber(values.hives_count), latitude: optionalNumber(values.latitude), longitude: optionalNumber(values.longitude) };
+  } else if (view === "hives") {
+    table = "hives";
+    payload = { ...payload, ...cleaned, frames_count: optionalNumber(values.frames_count) };
+  } else if (view === "treatments") {
+    table = "treatments";
+    payload = { ...payload, ...cleaned, hive_id: values.hive_id || null, withdrawal_until: values.withdrawal_until || null };
+  } else if (view === "biosecurity") {
+    table = "biosecurity_events";
+    payload = { ...payload, ...cleaned, apiary_id: values.apiary_id || null, mortality_count: toNumber(values.mortality_count) };
+  } else if (view === "traceability") {
+    table = "harvest_lots";
+    payload = {
+      ...payload,
+      ...cleaned,
+      kilos: toNumber(values.kilos),
+      container_count: toNumber(values.container_count),
+      sale_price_per_kg: optionalNumber(values.sale_price_per_kg),
+      estimated_cost: optionalNumber(values.estimated_cost),
+      qr_code: values.lot_code ? `QR-${values.lot_code}` : null
+    };
+  } else if (view === "inventory") {
+    table = "inventory_items";
+    payload = { ...payload, ...cleaned, quantity: toNumber(values.quantity), min_quantity: toNumber(values.min_quantity), expires_at: values.expires_at || null };
+  } else if (view === "sipec") {
+    table = "sipec_declarations";
+    payload = { ...payload, ...cleaned, declared_apiaries: toNumber(values.declared_apiaries), declared_hives: toNumber(values.declared_hives) };
+  } else if (view === "reports") {
+    table = "export_jobs";
+    payload = { ...payload, ...cleaned, status: "queued" };
+  }
+
+  if (!table) throw new Error("Esta vista no tiene formulario de registro");
+
+  const { data, error } = await supabase.from(table).insert(payload).select("id").single();
+  if (error) throw error;
+  await logAudit(`create_${view}`, table, data.id as string);
+  return data.id as string;
 }
 
 export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
@@ -438,16 +730,16 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
   if (view === "reports") {
     const { data } = await supabase
       .from("export_jobs")
-      .select("export_type, requested_at, status, file_url")
+      .select("export_type, created_at, status, file_url")
       .eq("company_id", companyId)
-      .order("requested_at", { ascending: false });
-    const rows = (data ?? []) as Array<{ export_type: string; requested_at: string; status: string; file_url: string | null }>;
+      .order("created_at", { ascending: false });
+    const rows = (data ?? []) as Array<{ export_type: string; created_at: string; status: string; file_url: string | null }>;
     return {
       title: "Reportes PDF/Excel",
       source: "Supabase",
       cards: [[String(rows.length), "Respaldos", "Desde export_jobs"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("pdf")).length), "PDF", "Generados"], [String(rows.filter((item) => item.export_type.toLowerCase().includes("excel")).length), "Excel", "Generados"]],
       headers: ["Reporte", "Fecha", "Formato", "Archivo", "Estado"],
-      rows: rows.map((item) => [item.export_type, formatDate(item.requested_at), item.export_type.toUpperCase().includes("PDF") ? "PDF" : "Excel", item.file_url ?? "Pendiente", item.status])
+      rows: rows.map((item) => [item.export_type, formatDate(item.created_at), item.export_type.toUpperCase().includes("PDF") ? "PDF" : "Excel", item.file_url ?? "Pendiente", item.status])
     };
   }
 
@@ -471,6 +763,19 @@ export async function getRecordViewData(view: ViewId): Promise<RecordViewData> {
   };
 }
 
+async function logAudit(action: string, entityTable: string, entityId: string) {
+  const companyId = await getActiveCompanyId();
+  const { data: sessionData } = await supabase.auth.getSession();
+  await supabase.from("audit_logs").insert({
+    company_id: companyId,
+    actor_user_id: sessionData.session?.user.id ?? null,
+    action,
+    entity_table: entityTable,
+    entity_id: entityId,
+    metadata: { source: "app" }
+  });
+}
+
 function percentage(value: number, total: number) {
   return total ? Math.round((value / total) * 100) : 0;
 }
@@ -483,8 +788,28 @@ function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-CL", { currency: "CLP", maximumFractionDigits: 0, style: "currency" }).format(value);
 }
 
+function cleanValues(values: Record<string, string>) {
+  return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value === "" ? null : value]));
+}
+
+function splitList(value = "") {
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function toNumber(value = "0") {
+  return Number(value || 0);
+}
+
+function optionalNumber(value = "") {
+  return value === "" ? null : Number(value);
+}
+
+function nextCode(prefix: string) {
+  return `${prefix}-${String(Date.now()).slice(-4)}`;
+}
+
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${value}T00:00:00`));
+  return new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value.includes("T") ? value : `${value}T00:00:00`));
 }
 
 async function getActiveCompanyId() {

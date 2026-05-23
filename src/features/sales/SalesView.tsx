@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSalesOrders } from "@/lib/supabase-data";
+import { getSalesOrders, saveSalesOrder } from "@/lib/supabase-data";
 
 interface SalesViewProps {
   onToast: (message: string) => void;
@@ -24,13 +24,52 @@ const fallbackSales: Sale[] = [
 
 export function SalesView({ onToast }: SalesViewProps) {
   const [sales, setSales] = useState<Sale[]>(fallbackSales);
+  const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    customerName: "",
+    customerChannel: "Retail local",
+    product: "Miel 500 g",
+    quantity: "",
+    unitPrice: "4800",
+    totalAmount: "",
+    status: "quoted",
+    notes: ""
+  });
   const total = sales.reduce((sum, sale) => sum + Number(sale.total_amount ?? 0), 0);
 
-  useEffect(() => {
-    getSalesOrders().then((rows) => {
+  function loadSales() {
+    return getSalesOrders().then((rows) => {
       if (rows.length) setSales(rows as Sale[]);
     });
+  }
+
+  useEffect(() => {
+    void loadSales();
   }, []);
+
+  async function handleSave() {
+    if (!form.customerName || !form.quantity) {
+      onToast("Completa cliente y cantidad");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const id = await saveSalesOrder(form);
+      await loadSales();
+      setOpen(false);
+      onToast(`Venta guardada en Supabase: ${id.slice(0, 8)}`);
+    } catch (error) {
+      onToast(error instanceof Error ? error.message : "No se pudo guardar venta");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function update(name: keyof typeof form, value: string) {
+    setForm((current) => ({ ...current, [name]: value }));
+  }
 
   return (
     <>
@@ -41,7 +80,7 @@ export function SalesView({ onToast }: SalesViewProps) {
             <h2>{formatCurrency(total)} en oportunidades activas</h2>
             <p>Gestiona clientes, lotes, reservas y margen sin mezclarlo con los registros sanitarios.</p>
           </div>
-          <button className="primary-button" onClick={() => onToast("Nueva venta agregada al pipeline")} type="button">Nueva venta</button>
+          <button className="primary-button" onClick={() => setOpen((value) => !value)} type="button">Nueva venta</button>
         </section>
         <section className="card">
           <div className="panel-header"><h2>Resumen</h2></div>
@@ -63,6 +102,38 @@ export function SalesView({ onToast }: SalesViewProps) {
           />
         ))}
       </div>
+      {open && (
+        <section className="card record-editor open">
+          <div className="panel-header">
+            <div>
+              <span className="pill">CRM apicola</span>
+              <h2>Nueva oportunidad comercial</h2>
+              <p>Registra cliente, producto, estado y monto directamente en Supabase.</p>
+            </div>
+            <button className="ghost-button" onClick={() => setOpen(false)} type="button">Cerrar</button>
+          </div>
+          <div className="form-grid triple">
+            <label>Cliente<input value={form.customerName} onChange={(event) => update("customerName", event.target.value)} /></label>
+            <label>Canal<input value={form.customerChannel} onChange={(event) => update("customerChannel", event.target.value)} /></label>
+            <label>Producto<input value={form.product} onChange={(event) => update("product", event.target.value)} /></label>
+            <label>Cantidad<input value={form.quantity} onChange={(event) => update("quantity", event.target.value)} placeholder="120 frascos" /></label>
+            <label>Precio unitario<input min="0" type="number" value={form.unitPrice} onChange={(event) => update("unitPrice", event.target.value)} /></label>
+            <label>Total<input min="0" type="number" value={form.totalAmount} onChange={(event) => update("totalAmount", event.target.value)} /></label>
+            <label>Estado
+              <select value={form.status} onChange={(event) => update("status", event.target.value)}>
+                <option value="quoted">Cotizado</option>
+                <option value="reserved">Reservado</option>
+                <option value="paid">Pagado</option>
+                <option value="delivered">Entregado</option>
+              </select>
+            </label>
+            <label className="wide-field">Notas<textarea rows={3} value={form.notes} onChange={(event) => update("notes", event.target.value)} /></label>
+          </div>
+          <div className="modal-actions">
+            <button className="primary-button" disabled={saving} onClick={() => void handleSave()} type="button">{saving ? "Guardando..." : "Guardar venta"}</button>
+          </div>
+        </section>
+      )}
     </>
   );
 }

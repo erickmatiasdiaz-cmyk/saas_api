@@ -2,10 +2,9 @@ import type { ViewId } from "@/lib/types";
 
 interface FieldHubProps {
   onNavigate: (view: ViewId) => void;
-  onToast: (message: string) => void;
 }
 
-export function FieldHub({ onNavigate, onToast }: FieldHubProps) {
+export function FieldHub({ onNavigate }: FieldHubProps) {
   return (
     <>
       <div className="hero-strip">
@@ -15,8 +14,8 @@ export function FieldHub({ onNavigate, onToast }: FieldHubProps) {
           <p>Escanea la colmena, dicta observaciones, completa checklist sanitario y guarda acciones de seguimiento.</p>
         </div>
         <div className="quick-actions">
-          <button className="primary-button" onClick={() => onToast("Nota de voz convertida en checklist")} type="button">Grabar nota de voz</button>
-          <button className="ghost-button" onClick={() => onToast("QR/NFC detectado: Colmena MZ-024")} type="button">Escanear QR/NFC</button>
+          <button className="primary-button" onClick={() => onNavigate("inspections")} type="button">Nueva inspeccion</button>
+          <button className="ghost-button" onClick={() => onNavigate("hives")} type="button">Abrir colmenas</button>
         </div>
       </div>
       <div className="module-grid">

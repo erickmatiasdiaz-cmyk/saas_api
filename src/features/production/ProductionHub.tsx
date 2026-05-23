@@ -2,10 +2,9 @@ import type { ViewId } from "@/lib/types";
 
 interface ProductionHubProps {
   onNavigate: (view: ViewId) => void;
-  onToast: (message: string) => void;
 }
 
-export function ProductionHub({ onNavigate, onToast }: ProductionHubProps) {
+export function ProductionHub({ onNavigate }: ProductionHubProps) {
   return (
     <>
       <div className="ops-layout">
@@ -15,7 +14,7 @@ export function ProductionHub({ onNavigate, onToast }: ProductionHubProps) {
               <span className="pill">De la colmena al frasco</span>
               <h2>Centro de produccion</h2>
             </div>
-            <button className="primary-button" onClick={() => onToast("Lote trazable M2026-004 creado")} type="button">Crear lote trazable</button>
+            <button className="primary-button" onClick={() => onNavigate("traceability")} type="button">Crear lote trazable</button>
           </div>
           <div className="batch-progress">
             {["Cosecha", "Filtrado", "Envasado", "Etiqueta QR", "Venta"].map((step, index) => (

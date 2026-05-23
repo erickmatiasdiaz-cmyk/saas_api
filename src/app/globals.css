@@ -1719,6 +1719,37 @@ label {
   gap: 10px;
 }
 
+.record-editor {
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(239, 247, 239, 0.9)),
+    radial-gradient(circle at 92% 12%, rgba(231, 169, 40, 0.18), transparent 28%);
+  margin-bottom: 16px;
+}
+
+.record-editor.open {
+  border-color: color-mix(in srgb, var(--brand-accent, #e7a928) 55%, var(--line));
+}
+
+.record-editor .panel-header p,
+.inline-feedback {
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
+.inline-feedback {
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-weight: 800;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+
+.form-field.wide-field,
+.wide-field {
+  grid-column: 1 / -1;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

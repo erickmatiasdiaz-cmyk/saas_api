@@ -1,3 +1,6 @@
+"use client";
+
+import { createExportJob } from "@/lib/supabase-data";
 import type { ViewId } from "@/lib/types";
 
 interface ComplianceHubProps {
@@ -13,6 +16,15 @@ export function ComplianceHub({ onNavigate, onToast }: ComplianceHubProps) {
     ["Prioridades de cumplimiento", "Checklist de completitud para vender e implementar.", "priorities"]
   ];
 
+  async function handleExportPackage() {
+    try {
+      const id = await createExportJob("sag_sipec", "zip");
+      onToast(`Paquete SAG/SIPEC registrado: ${id.slice(0, 8)}`);
+    } catch (error) {
+      onToast(error instanceof Error ? error.message : "No se pudo registrar respaldo");
+    }
+  }
+
   return (
     <>
       <div className="compliance-dashboard">
@@ -21,7 +33,7 @@ export function ComplianceHub({ onNavigate, onToast }: ComplianceHubProps) {
           <strong>86%</strong>
           <h2>Preparacion documental</h2>
           <p>Perfil, FRADA, SIPEC, tratamientos, bioseguridad y reportes en un solo flujo.</p>
-          <button className="primary-button" onClick={() => onToast("Paquete SAG/SIPEC exportado")} type="button">Exportar paquete SAG</button>
+          <button className="primary-button" onClick={() => void handleExportPackage()} type="button">Exportar paquete SAG</button>
         </section>
         <section className="card">
           <div className="panel-header"><h2>Checklist cumplimiento</h2></div>
