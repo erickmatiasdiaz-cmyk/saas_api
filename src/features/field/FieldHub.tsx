@@ -5,6 +5,68 @@ interface FieldHubProps {
 }
 
 export function FieldHub({ onNavigate }: FieldHubProps) {
+  const actions: Array<{
+    title: string;
+    copy: string;
+    detail: string;
+    badge: string;
+    cta: string;
+    target: ViewId;
+    visual: string;
+    metric: string;
+  }> = [
+    {
+      title: "Inspeccion rapida",
+      copy: "Checklist tecnico para reina, cria, reservas, temperamento, varroa y acciones de seguimiento.",
+      detail: "Guarda evidencia sanitaria y deja proxima visita agendada.",
+      badge: "Campo",
+      cta: "Registrar",
+      target: "inspections",
+      visual: "inspection",
+      metric: "5 min"
+    },
+    {
+      title: "QR/NFC de colmena",
+      copy: "Consulta el historial exacto de una colmena antes de intervenirla en terreno.",
+      detail: "Ideal para equipos con varias zonas productivas.",
+      badge: "Historial",
+      cta: "Ver historial",
+      target: "hives",
+      visual: "qr",
+      metric: "1 escaneo"
+    },
+    {
+      title: "Apiarios y colmenas",
+      copy: "Mapa, coordenadas, actividad apicola, conteo de colmenas y estado general.",
+      detail: "Base para FRADA, planificacion de rutas y declaracion SIPEC.",
+      badge: "Operacion",
+      cta: "Gestionar",
+      target: "apiaries",
+      visual: "apiaries",
+      metric: "GPS"
+    },
+    {
+      title: "Tratamientos",
+      copy: "Registra medicamento, principio activo, dosis, lote, aplicacion y periodo de retiro.",
+      detail: "Trazabilidad sanitaria lista para respaldo y auditoria.",
+      badge: "Sanidad",
+      cta: "Gestionar",
+      target: "treatments",
+      visual: "treatments",
+      metric: "Lote"
+    },
+    {
+      title: "Bioseguridad",
+      copy: "Controla limpieza, material externo, renovacion de cera, mortalidad y causa probable.",
+      detail: "Reduce riesgo sanitario y ordena acciones preventivas.",
+      badge: "Riesgo",
+      cta: "Revisar",
+      target: "biosecurity",
+      visual: "biosecurity",
+      metric: "Alertas"
+    }
+  ];
+
   return (
     <>
       <div className="hero-strip">
@@ -19,24 +81,30 @@ export function FieldHub({ onNavigate }: FieldHubProps) {
         </div>
       </div>
       <div className="module-grid">
-        {[
-          ["Inspeccion rapida", "Reina, cria, reservas, temperamento, varroa, salud y acciones.", "inspections"],
-          ["QR/NFC de colmena", "Abre el historial exacto de la colmena antes de registrar.", "hives"],
-          ["Apiarios y colmenas", "Mapa, ubicacion, historial y estructura de cada apiario.", "apiaries"],
-          ["Tratamientos", "Medicamento, principio activo, dosis, lote, aplicacion y retiro.", "treatments"],
-          ["Bioseguridad", "Limpieza, renovacion de cera, material externo y mortalidad.", "biosecurity"]
-        ].map(([title, copy, target]) => (
-          <article className="module-card action-card" key={title}>
-            <span className="tag ok">Abrir</span>
-            <h2>{title}</h2>
-            <p>{copy}</p>
-            <button className="ghost-button" onClick={() => onNavigate(target as ViewId)} type="button">Entrar</button>
+        {actions.map(({ title, copy, detail, badge, cta, target, visual, metric }) => (
+          <article className="module-card action-card field-feature-card" key={title}>
+            <div className={`field-card-visual ${visual}`}>
+              <span>{metric}</span>
+            </div>
+            <div className="field-card-copy">
+              <span className="tag ok">{badge}</span>
+              <h2>{title}</h2>
+              <p>{copy}</p>
+              <small>{detail}</small>
+            </div>
+            <button className="ghost-button" onClick={() => onNavigate(target)} type="button">{cta}</button>
           </article>
         ))}
-        <article className="module-card">
-          <strong>24h</strong>
-          <h2>Clima y floracion</h2>
-          <p>Ventana favorable para inspeccion: templado, viento bajo, floracion media.</p>
+        <article className="module-card field-feature-card weather-card">
+          <div className="field-card-visual weather">
+            <span>24h</span>
+          </div>
+          <div className="field-card-copy">
+            <span className="tag watch">Clima</span>
+            <h2>Clima y floracion</h2>
+            <p>Ventana favorable para inspeccion: templado, viento bajo y floracion media.</p>
+            <small>Planifica visitas evitando lluvia, viento alto o baja temperatura.</small>
+          </div>
         </article>
       </div>
     </>

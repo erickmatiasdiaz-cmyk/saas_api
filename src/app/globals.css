@@ -1368,6 +1368,104 @@ label {
   width: fit-content;
 }
 
+.field-feature-card {
+  display: grid;
+  gap: 14px;
+  min-height: 320px;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.field-card-visual {
+  background:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.55)),
+    url("/assets/apicola-mockup.png");
+  background-size: cover;
+  border-radius: 12px;
+  min-height: 118px;
+  overflow: hidden;
+  position: relative;
+}
+
+.field-card-visual::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 28px 28px;
+  content: "";
+  inset: 0;
+  opacity: 0.26;
+  position: absolute;
+}
+
+.field-card-visual span {
+  background: rgba(255, 253, 248, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 999px;
+  bottom: 10px;
+  color: #102018;
+  font-size: 12px;
+  font-weight: 900;
+  left: 10px;
+  padding: 7px 10px;
+  position: absolute;
+  z-index: 1;
+}
+
+.field-card-visual.inspection {
+  background-position: 52% 44%;
+}
+
+.field-card-visual.qr {
+  background-position: 82% 50%;
+}
+
+.field-card-visual.apiaries {
+  background-position: 32% 48%;
+}
+
+.field-card-visual.treatments {
+  background-position: 64% 56%;
+}
+
+.field-card-visual.biosecurity {
+  background-position: 22% 70%;
+}
+
+.field-card-visual.weather {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.04), rgba(8, 47, 38, 0.5)),
+    radial-gradient(circle at 28% 28%, rgba(255, 221, 114, 0.9), transparent 14%),
+    linear-gradient(135deg, #79a873, #d5b86a);
+}
+
+.field-card-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.field-card-copy h2 {
+  font-size: 20px;
+}
+
+.field-card-copy p {
+  color: var(--ink);
+  line-height: 1.42;
+  margin: 0;
+}
+
+.field-card-copy small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.field-feature-card .ghost-button {
+  border-radius: 12px;
+  font-weight: 900;
+  justify-self: start;
+  min-width: 132px;
+}
+
 .chat-card {
   display: grid;
   gap: 12px;

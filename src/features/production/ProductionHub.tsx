@@ -51,10 +51,10 @@ export function ProductionHub({ onNavigate }: ProductionHubProps) {
 function Action({ title, copy, target, onNavigate }: { title: string; copy: string; target: ViewId; onNavigate: (view: ViewId) => void }) {
   return (
     <article className="module-card action-card">
-      <span className="tag ok">Abrir</span>
+      <span className="tag ok">Modulo</span>
       <h2>{title}</h2>
       <p>{copy}</p>
-      <button className="ghost-button" onClick={() => onNavigate(target)} type="button">Entrar</button>
+      <button className="ghost-button" onClick={() => onNavigate(target)} type="button">Gestionar</button>
     </article>
   );
 }

@@ -50,10 +50,10 @@ export function ComplianceHub({ onNavigate, onToast }: ComplianceHubProps) {
       <div className="module-grid">
         {actions.map(([title, copy, target]) => (
           <article className="module-card action-card" key={title}>
-            <span className="tag ok">Abrir</span>
+            <span className="tag ok">Modulo</span>
             <h2>{title}</h2>
             <p>{copy}</p>
-            <button className="ghost-button" onClick={() => onNavigate(target)} type="button">Entrar</button>
+            <button className="ghost-button" onClick={() => onNavigate(target)} type="button">Revisar</button>
           </article>
         ))}
       </div>
