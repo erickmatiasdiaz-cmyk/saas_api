@@ -2003,13 +2003,14 @@ dialog::backdrop {
   }
 
   .sidebar {
+    backdrop-filter: blur(16px);
     height: auto;
     overflow: visible;
     padding: 14px;
     position: sticky;
     top: 0;
     width: auto;
-    z-index: 10;
+    z-index: 40;
   }
 
   .brand {
@@ -2054,6 +2055,9 @@ dialog::backdrop {
   .nav {
     display: none;
     grid-template-columns: 1fr;
+    margin-top: 6px;
+    max-height: calc(100vh - 132px);
+    overflow-y: auto;
   }
 
   .sidebar.menu-open .nav {
@@ -2068,30 +2072,48 @@ dialog::backdrop {
     display: none;
   }
 
+  .sidebar.menu-open .sidebar-card {
+    display: block;
+  }
+
   .app-shell {
     margin-left: 0;
     padding: 18px;
   }
 
-  .topbar,
-  .profile {
-    align-items: flex-start;
-    flex-direction: column;
+  .topbar {
+    align-items: center;
+    background: rgba(245, 242, 234, 0.84);
+    border: 1px solid rgba(221, 214, 199, 0.72);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(52, 42, 22, 0.09);
+    display: grid;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 14px;
+    padding: 14px;
+    position: sticky;
+    top: 82px;
+    z-index: 20;
+  }
+
+  .topbar > div:first-child {
+    min-width: 0;
+  }
+
+  .topbar h1 {
+    overflow-wrap: anywhere;
   }
 
   .profile {
-    width: 100%;
+    align-items: center;
+    gap: 8px;
   }
 
-  .profile .avatar,
   .profile .notification,
   .profile div,
-  .logout-button {
+  .profile .logout-button {
     display: none;
-  }
-
-  .profile button {
-    width: 100%;
   }
 
   .settings-hero {
@@ -2107,15 +2129,31 @@ dialog::backdrop {
   .form-grid.triple {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .sales-hero,
+  .hero-strip,
+  .settings-hero {
+    border-radius: 16px;
+  }
 }
 
 @media (max-width: 620px) {
+  body {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(231, 169, 40, 0.12), transparent 28%),
+      linear-gradient(135deg, #fbf8f0, #f1ece0);
+  }
+
   .app-shell {
-    padding: 14px;
+    padding: 12px;
   }
 
   h1 {
-    font-size: 28px;
+    font-size: 26px;
+  }
+
+  h2 {
+    line-height: 1.15;
   }
 
   .kpi-grid,
@@ -2128,6 +2166,37 @@ dialog::backdrop {
   .icon-picker,
   .form-grid.triple {
     grid-template-columns: 1fr;
+  }
+
+  .card,
+  .module-card,
+  .stat-card {
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  .kpi-grid,
+  .module-grid,
+  .dashboard-grid,
+  .ops-layout,
+  .sales-layout,
+  .compliance-dashboard {
+    gap: 12px;
+  }
+
+  .module-card {
+    min-height: auto;
+  }
+
+  .stat-card,
+  .kpi-card {
+    min-height: 76px;
+  }
+
+  .stat-card strong,
+  .kpi-card strong,
+  .module-card strong {
+    font-size: 24px;
   }
 
   .settings-hero {
@@ -2148,6 +2217,32 @@ dialog::backdrop {
   .hero-strip {
     align-items: stretch;
     flex-direction: column;
+    padding: 18px;
+  }
+
+  .hero-strip h2,
+  .sales-hero h2,
+  .settings-hero h2 {
+    font-size: 28px;
+    line-height: 1.02;
+  }
+
+  .hero-strip p,
+  .sales-hero p {
+    font-size: 14px;
+  }
+
+  .quick-actions,
+  .modal-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .quick-actions button,
+  .modal-actions button,
+  .primary-button,
+  .ghost-button {
+    width: 100%;
   }
 
   .panel {
@@ -2173,16 +2268,154 @@ dialog::backdrop {
     border-width: 7px;
   }
 
-  .floating-actions {
-    bottom: 14px;
-    gap: 8px;
-    grid-template-columns: repeat(3, 1fr);
-    left: 14px;
-    right: 14px;
+  .brand strong {
+    font-size: 16px;
   }
 
-  .floating-actions button {
-    height: 48px;
-    padding: 0 8px;
+  .brand small {
+    font-size: 10px;
+  }
+
+  .brand-mark {
+    border-radius: 12px;
+    height: 42px;
+    width: 42px;
+  }
+
+  .topbar {
+    top: 76px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    margin-bottom: 6px;
+  }
+
+  .apiary-map {
+    height: 210px;
+  }
+
+  .apiary-list {
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .health-content {
+    justify-items: center;
+  }
+
+  .health-legend {
+    width: 100%;
+  }
+
+  .batch-progress {
+    grid-template-columns: 1fr;
+  }
+
+  .batch-progress div {
+    grid-template-columns: 94px 1fr;
+    align-items: center;
+  }
+
+  .kanban-board {
+    display: flex;
+    gap: 12px;
+    margin-inline: -12px;
+    overflow-x: auto;
+    padding: 0 12px 8px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kanban-column {
+    flex: 0 0 84vw;
+    min-height: 260px;
+    scroll-snap-align: start;
+  }
+
+  .table-wrap {
+    overflow: visible;
+  }
+
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr {
+    display: block;
+  }
+
+  table {
+    min-width: 0;
+  }
+
+  thead {
+    display: none;
+  }
+
+  tr {
+    background: #fbfaf6;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+
+  td {
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(221, 214, 199, 0.72);
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(92px, 0.42fr) minmax(0, 1fr);
+    padding: 9px 0;
+  }
+
+  td:last-child {
+    border-bottom: 0;
+  }
+
+  td::before {
+    color: var(--muted);
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .row-actions {
+    justify-content: flex-end;
+  }
+
+  .login-screen {
+    min-height: 100dvh;
+    padding: 12px;
+  }
+
+  .login-art {
+    border-radius: 18px;
+    min-height: 260px;
+    padding: 20px;
+  }
+
+  .login-copy h1 {
+    font-size: 32px;
+  }
+
+  .login-copy p {
+    font-size: 14px;
+  }
+
+  .login-card {
+    border-radius: 18px;
+    padding: 18px;
+  }
+
+  .login-card h2 {
+    font-size: 26px;
+  }
+
+  .floating-actions {
+    display: none;
   }
 }

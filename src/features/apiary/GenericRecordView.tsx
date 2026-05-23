@@ -107,7 +107,7 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
   }
 
   async function handleDelete(rowId: string) {
-    const confirmed = window.confirm("¿Seguro que quieres eliminar o archivar este registro?");
+    const confirmed = window.confirm("Seguro que quieres eliminar o archivar este registro?");
     if (!confirmed) return;
 
     setSaving(true);
@@ -194,9 +194,9 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
               {config.rows.length ? (
                 config.rows.map((row) => (
                   <tr key={row.id}>
-                    {row.cells.map((cell, index) => <td key={`${row.id}-${index}`}>{cell || "Sin dato"}</td>)}
+                    {row.cells.map((cell, index) => <td data-label={config.headers[index] ?? "Dato"} key={`${row.id}-${index}`}>{cell || "Sin dato"}</td>)}
                     {(row.editable || row.deletable) && (
-                      <td>
+                      <td data-label="Acciones">
                         <div className="row-actions">
                           {row.editable && <button className="text-button" onClick={() => startEdit(row.id)} type="button">Editar</button>}
                           {row.deletable && <button className="text-button danger" disabled={saving} onClick={() => void handleDelete(row.id)} type="button">Eliminar</button>}
