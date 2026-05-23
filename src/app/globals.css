@@ -135,8 +135,11 @@ button {
 
 .sidebar {
   background:
-    radial-gradient(circle at 18% 12%, rgba(231, 169, 40, 0.22), transparent 25%),
-    linear-gradient(180deg, var(--dark-2), var(--dark));
+    radial-gradient(circle at 16% 8%, rgba(231, 169, 40, 0.18), transparent 24%),
+    radial-gradient(circle at 85% 88%, rgba(43, 138, 88, 0.18), transparent 30%),
+    linear-gradient(180deg, #0c3329 0%, #08271f 48%, #061b16 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 18px 0 50px rgba(8, 31, 25, 0.12);
   color: #eef8f1;
   display: flex;
   flex-direction: column;
@@ -404,14 +407,13 @@ button {
 
 .honeycomb-bg {
   background:
-    linear-gradient(30deg, rgba(255, 210, 95, 0.15) 12%, transparent 12.5% 87%, rgba(255, 210, 95, 0.15) 87.5%),
-    linear-gradient(150deg, rgba(255, 210, 95, 0.15) 12%, transparent 12.5% 87%, rgba(255, 210, 95, 0.15) 87.5%),
-    linear-gradient(30deg, rgba(255, 255, 255, 0.05) 12%, transparent 12.5% 87%, rgba(255, 255, 255, 0.05) 87.5%),
-    linear-gradient(150deg, rgba(255, 255, 255, 0.05) 12%, transparent 12.5% 87%, rgba(255, 255, 255, 0.05) 87.5%);
-  background-position: 0 0, 0 0, 26px 45px, 26px 45px;
-  background-size: 52px 90px;
+    linear-gradient(120deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(60deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 20% 20%, rgba(255, 216, 112, 0.14), transparent 22%);
+  background-size: 34px 34px, 34px 34px, 240px 240px;
   inset: -35px;
-  opacity: 0.55;
+  mask-image: linear-gradient(180deg, black 0%, rgba(0, 0, 0, 0.56) 54%, transparent 100%);
+  opacity: 0.62;
   pointer-events: none;
   position: absolute;
 }
@@ -423,10 +425,14 @@ button {
 
 .brand {
   align-items: center;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
   display: flex;
   gap: 12px;
   flex: 0 0 auto;
   margin-bottom: 4px;
+  padding: 10px;
 }
 
 .brand-mark {
@@ -473,12 +479,13 @@ button {
 
 .brand strong {
   display: block;
-  font-size: 19px;
+  font-size: 18px;
+  line-height: 1.1;
 }
 
 .brand small {
-  color: #c9ddd2;
-  font-size: 12px;
+  color: #b7d0c6;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -499,15 +506,15 @@ button {
 }
 
 .nav {
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  border-radius: 18px;
   display: grid;
   flex: 0 0 auto;
-  gap: 6px;
+  gap: 7px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   overflow: visible;
-  padding: 10px;
+  padding: 12px;
   position: relative;
 }
 
@@ -525,17 +532,17 @@ button {
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 13px;
   color: #ecf6ef;
   display: flex;
   font-size: 13px;
   font-weight: 800;
   gap: 8px;
-  min-height: 40px;
+  min-height: 42px;
   min-width: 0;
-  padding: 0 8px;
+  padding: 0 10px;
   text-align: left;
-  transition: 160ms ease;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
 .nav-item:first-child {
@@ -545,34 +552,45 @@ button {
 
 .nav-item:hover,
 .nav-item.active {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.08));
-  border-color: rgba(255, 255, 255, 0.16);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.07));
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
 }
 
 .nav-item.active {
-  box-shadow: inset 3px 0 0 #ffcf4a, 0 10px 26px rgba(0, 0, 0, 0.13);
+  box-shadow: inset 0 0 0 1px rgba(255, 207, 74, 0.38), 0 14px 28px rgba(0, 0, 0, 0.16);
+  color: #ffffff;
 }
 
 .nav-icon {
   align-items: center;
-  background: rgba(255, 255, 255, 0.11);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
   color: #ffdc72;
   display: inline-flex;
   font-size: 11px;
   font-weight: 800;
-  height: 25px;
+  height: 28px;
   justify-content: center;
-  width: 25px;
+  width: 28px;
+}
+
+.nav-item.active .nav-icon {
+  background: linear-gradient(135deg, #ffdd72, #d99718);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: #102018;
 }
 
 .sidebar-card {
-  background: rgba(255, 255, 255, 0.09);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.07)),
+    radial-gradient(circle at 90% 0%, rgba(255, 221, 114, 0.22), transparent 40%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
   flex: 0 0 auto;
   margin-top: 0;
-  padding: 13px;
+  padding: 14px;
   position: relative;
   overflow: hidden;
 }
@@ -2100,6 +2118,9 @@ dialog::backdrop {
 
   .sidebar {
     backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-right: 0;
+    box-shadow: 0 16px 36px rgba(8, 31, 25, 0.18);
     height: auto;
     overflow: visible;
     padding: 14px;
@@ -2149,6 +2170,8 @@ dialog::backdrop {
   }
 
   .nav {
+    background: rgba(4, 26, 21, 0.52);
+    border-radius: 16px;
     display: none;
     grid-template-columns: 1fr;
     margin-top: 6px;
@@ -2162,6 +2185,10 @@ dialog::backdrop {
 
   .nav-item:first-child {
     grid-column: auto;
+  }
+
+  .nav-item {
+    min-height: 46px;
   }
 
   .sidebar-card {
