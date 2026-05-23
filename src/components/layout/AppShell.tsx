@@ -48,7 +48,7 @@ const initialCompany: CompanyProfile = {
   businessLine: "Produccion y comercializacion apicola",
   taxId: "76.543.210-9",
   sagCode: "FRADA-16-2026",
-  email: "maria@apigestor.cl",
+  email: "contacto@apigestor.cl",
   phone: "+56 9 6123 4567",
   website: "www.apicoladelvalle.cl",
   address: "Camino El Manzano km 8",

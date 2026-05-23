@@ -26,7 +26,7 @@ const sagProfile = {
   commune: "San Carlos",
   region: "Nuble",
   phone: "+56 9 5555 1212",
-  email: "maria@apigestor.cl",
+  email: "contacto@apigestor.cl",
   personType: "Persona natural",
   indap: "Usuario INDAP",
   organic: "No organico",

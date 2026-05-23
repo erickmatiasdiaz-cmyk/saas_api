@@ -90,9 +90,9 @@ export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
           <h1>Gestiona tu apiario con trazabilidad profesional.</h1>
           <p>Inspecciones rapidas, QR/NFC, cosecha, ventas y respaldo SAG/SIPEC para productores chilenos.</p>
           <div className="login-proof">
-            <span>Datos en Supabase</span>
-            <span>Listo para SAG/SIPEC</span>
-            <span>Mobile-first</span>
+            <span>Respaldo sanitario</span>
+            <span>Operacion trazable</span>
+            <span>Control comercial</span>
           </div>
         </div>
       </div>
@@ -111,10 +111,10 @@ export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
             </span>
             <div>
               <strong>{company.productName}</strong>
-              <small>{company.region || "Chile"}</small>
+              <small>Gestion apicola</small>
             </div>
           </div>
-          <span className="login-secure-badge">Seguro</span>
+          <span className="login-secure-badge">Acceso seguro</span>
         </div>
         <div className="login-heading">
           <p className="eyebrow">{isSignup ? "Onboarding apicola" : "Acceso privado"}</p>
@@ -124,11 +124,11 @@ export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
 
         <label className="premium-field">
           Correo
-          <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} placeholder="maria@apigestor.cl" required type="email" value={email} />
+          <input autoComplete="email" onChange={(event) => setEmail(event.target.value)} placeholder="correo@tuempresa.cl" required type="email" value={email} />
         </label>
         <label className="premium-field">
           Clave
-          <input autoComplete={isSignup ? "new-password" : "current-password"} minLength={6} onChange={(event) => setPassword(event.target.value)} placeholder={isSignup ? "Crea una clave de minimo 6 caracteres" : "demo2026"} required type="password" value={password} />
+          <input autoComplete={isSignup ? "new-password" : "current-password"} minLength={6} onChange={(event) => setPassword(event.target.value)} placeholder={isSignup ? "Crea una clave de minimo 6 caracteres" : "Ingresa tu clave"} required type="password" value={password} />
         </label>
 
         {isSignup && (
@@ -159,7 +159,7 @@ export function LoginScreen({ company, onLogin, onToast }: LoginScreenProps) {
         <button className="ghost-button login-secondary" onClick={() => setMode(isSignup ? "signin" : "signup")} type="button">
           {isSignup ? "Ya tengo cuenta" : "Crear usuario"}
         </button>
-        <p className="login-note">Demo: maria@apigestor.cl / demo2026</p>
+        <p className="login-note">Acceso reservado para empresas y equipos autorizados.</p>
       </form>
     </section>
   );
