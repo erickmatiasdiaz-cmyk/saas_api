@@ -1439,6 +1439,27 @@ label {
     linear-gradient(135deg, #79a873, #d5b86a);
 }
 
+.field-card-visual.weather.ok {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.04), rgba(8, 47, 38, 0.48)),
+    radial-gradient(circle at 28% 28%, rgba(255, 221, 114, 0.95), transparent 14%),
+    linear-gradient(135deg, #6faa78, #d8bb6a);
+}
+
+.field-card-visual.weather.watch {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.04), rgba(8, 47, 38, 0.48)),
+    radial-gradient(circle at 34% 28%, rgba(255, 221, 114, 0.7), transparent 13%),
+    linear-gradient(135deg, #789271, #c2ad63);
+}
+
+.field-card-visual.weather.risk {
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.04), rgba(8, 47, 38, 0.58)),
+    radial-gradient(circle at 40% 30%, rgba(255, 255, 255, 0.38), transparent 14%),
+    linear-gradient(135deg, #66756e, #9d8b64);
+}
+
 .field-card-copy {
   display: grid;
   gap: 8px;
@@ -1457,6 +1478,28 @@ label {
 .field-card-copy small {
   color: var(--muted);
   line-height: 1.4;
+}
+
+.weather-metrics {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 4px 0;
+}
+
+.weather-metrics span {
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 9px;
+}
+
+.weather-metrics b {
+  color: var(--ink);
+  display: block;
+  font-size: 14px;
 }
 
 .field-feature-card .ghost-button {
@@ -2531,6 +2574,10 @@ dialog::backdrop {
 
   .health-legend {
     width: 100%;
+  }
+
+  .weather-metrics {
+    grid-template-columns: 1fr;
   }
 
   .batch-progress {
