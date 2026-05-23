@@ -2212,6 +2212,10 @@ dialog::backdrop {
     display: none;
   }
 
+  .profile .mobile-logout {
+    display: inline-flex;
+  }
+
   .settings-hero {
     align-items: stretch;
     flex-direction: column;

@@ -21,7 +21,7 @@ export function Topbar({ company, eyebrow, title, onLogout }: TopbarProps) {
           <strong>{company.ownerName}</strong>
           <small>{company.companyName}</small>
         </div>
-        <button className="logout-button" onClick={onLogout} type="button">Salir</button>
+        <button className="logout-button mobile-logout" onClick={onLogout} type="button">Salir</button>
       </div>
     </header>
   );
