@@ -912,8 +912,22 @@ textarea {
   grid-template-columns: minmax(0, 1fr) 190px;
 }
 
+.map-actions {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.map-actions .ghost-button {
+  min-height: 38px;
+  padding-inline: 14px;
+  white-space: nowrap;
+}
+
 .apiary-map {
   background:
+    radial-gradient(circle at 82% 18%, rgba(255, 221, 118, 0.72), transparent 12%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.14), transparent 42%),
     linear-gradient(rgba(8, 47, 38, 0.1), rgba(8, 47, 38, 0.1)),
     radial-gradient(circle at 28% 30%, #597d46, transparent 18%),
     radial-gradient(circle at 70% 70%, #b49a50, transparent 20%),
@@ -926,12 +940,28 @@ textarea {
 
 .apiary-map::before {
   background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09) 12.5%, transparent 12.5% 50%, rgba(255, 255, 255, 0.09) 50% 62.5%, transparent 62.5%),
     linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
     linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px);
-  background-size: 46px 46px;
+  background-size: 74px 74px, 46px 46px, 46px 46px;
   content: "";
   inset: 0;
   position: absolute;
+}
+
+.map-compass {
+  background: rgba(7, 31, 25, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: white;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 7px 10px;
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 2;
 }
 
 .map-pin {
@@ -967,6 +997,47 @@ textarea {
   background: #f15c3f;
 }
 
+.user-gps-pin {
+  background: #2b7fbd;
+  border: 3px solid white;
+  border-radius: 999px;
+  box-shadow: 0 0 0 6px rgba(43, 127, 189, 0.18), 0 12px 30px rgba(7, 31, 25, 0.28);
+  height: 18px;
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  z-index: 3;
+}
+
+.user-gps-pin::after {
+  animation: gps-pulse 1.8s ease-out infinite;
+  border: 1px solid rgba(43, 127, 189, 0.7);
+  border-radius: inherit;
+  content: "";
+  inset: -12px;
+  position: absolute;
+}
+
+.user-gps-pin i {
+  background: white;
+  border-radius: inherit;
+  height: 4px;
+  inset: 4px;
+  position: absolute;
+  width: 4px;
+}
+
+@keyframes gps-pulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
 .apiary-list,
 .inspection-list,
 .treatment-list {
@@ -998,6 +1069,11 @@ textarea {
 .inspection-row small,
 .treatment-row small {
   color: var(--muted);
+}
+
+.gps-row {
+  background: #eaf4fb;
+  border-color: #abd0e9;
 }
 
 .status,
@@ -2004,6 +2080,28 @@ label {
   padding: 10px 12px;
 }
 
+.gps-capture {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(43, 127, 189, 0.1), rgba(85, 191, 110, 0.12)),
+    #f7fbf7;
+  border: 1px solid #c9dfce;
+  border-radius: 12px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 13px 14px;
+}
+
+.gps-capture strong {
+  display: block;
+}
+
+.gps-capture small {
+  color: var(--muted);
+}
+
 .form-field.wide-field,
 .wide-field {
   grid-column: 1 / -1;
@@ -2501,12 +2599,14 @@ dialog::backdrop {
   }
 
   .quick-actions,
+  .gps-capture,
   .modal-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
   .quick-actions button,
+  .gps-capture button,
   .modal-actions button,
   .primary-button,
   .ghost-button {
@@ -2518,6 +2618,11 @@ dialog::backdrop {
   }
 
   .panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .map-actions {
     align-items: stretch;
     flex-direction: column;
   }

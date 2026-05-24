@@ -25,6 +25,8 @@ export interface Apiary {
   commune: string;
   region: string;
   coordinates: string;
+  latitude: number | null;
+  longitude: number | null;
   activity: string;
   hives: number;
   health: HealthStatus;

@@ -97,6 +97,27 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
     setFormValues((current) => ({ ...current, [name]: value }));
   }
 
+  function fillCurrentGps() {
+    if (!navigator.geolocation) {
+      setFeedback("Este dispositivo no entrega GPS desde el navegador.");
+      return;
+    }
+
+    setFeedback("Buscando GPS del dispositivo...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormValues((current) => ({
+          ...current,
+          latitude: position.coords.latitude.toFixed(6),
+          longitude: position.coords.longitude.toFixed(6)
+        }));
+        setFeedback(`GPS capturado con precision aproximada de ${Math.round(position.coords.accuracy)} m.`);
+      },
+      () => setFeedback("No se pudo obtener GPS. Revisa permisos del navegador."),
+      { enableHighAccuracy: true, maximumAge: 1000 * 60 * 5, timeout: 8000 }
+    );
+  }
+
   function startEdit(rowId: string) {
     const row = config.rows.find((item) => item.id === rowId);
     if (!row?.values || !formConfig) return;
@@ -153,6 +174,15 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
           {feedback && <p className="inline-feedback">{feedback}</p>}
           {formOpen && (
             <>
+              {view === "apiaries" && (
+                <div className="gps-capture">
+                  <div>
+                    <strong>GPS del apiario</strong>
+                    <small>Captura la ubicacion real desde el telefono cuando estes en terreno.</small>
+                  </div>
+                  <button className="ghost-button" onClick={fillCurrentGps} type="button">Usar GPS actual</button>
+                </div>
+              )}
               <div className="form-grid triple">
                 {formConfig.fields.map((field) => (
                   <FormField field={field} key={field.name} onChange={updateValue} value={formValues[field.name] ?? ""} />

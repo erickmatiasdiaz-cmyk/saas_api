@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, StatCard } from "@/components/ui/Card";
 import { apiaries, healthLabel, inspections, treatments } from "@/lib/mock-data";
 import { getApiaries, getDashboardStats, getInspections, getTreatments } from "@/lib/supabase-data";
@@ -21,6 +21,9 @@ export function DashboardView({ onToast }: DashboardViewProps) {
     alertCount: 3,
     healthBuckets: { ok: 82, watch: 11, risk: 5 }
   });
+  const [userLocation, setUserLocation] = useState<GpsLocation | null>(null);
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const mapPoints = useMemo(() => projectApiaryMap(remoteApiaries, userLocation), [remoteApiaries, userLocation]);
 
   useEffect(() => {
     let mounted = true;
@@ -35,6 +38,32 @@ export function DashboardView({ onToast }: DashboardViewProps) {
       mounted = false;
     };
   }, []);
+
+  function requestGps() {
+    if (!navigator.geolocation) {
+      setGpsStatus("error");
+      onToast("Este dispositivo no entrega GPS en el navegador");
+      return;
+    }
+
+    setGpsStatus("loading");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy
+        });
+        setGpsStatus("ready");
+        onToast("GPS conectado al mapa de apiarios");
+      },
+      () => {
+        setGpsStatus("error");
+        onToast("No se pudo obtener GPS. Revisa permisos del navegador");
+      },
+      { enableHighAccuracy: true, maximumAge: 1000 * 60 * 5, timeout: 8000 }
+    );
+  }
 
   return (
     <>
@@ -55,31 +84,52 @@ export function DashboardView({ onToast }: DashboardViewProps) {
       <div className="dashboard-grid">
         <Card className="map-panel">
           <div className="panel-header">
-            <h2>Mapa de apiarios</h2>
-            <select defaultValue="all">
-              <option value="all">Todos los apiarios</option>
-            </select>
+            <div>
+              <h2>Mapa GPS de apiarios</h2>
+              <p>Ubicacion desde coordenadas registradas en cada apiario.</p>
+            </div>
+            <div className="map-actions">
+              <button className="ghost-button" onClick={requestGps} type="button">{gpsStatus === "loading" ? "Buscando..." : "Usar mi GPS"}</button>
+              <select defaultValue="all">
+                <option value="all">Todos los apiarios</option>
+              </select>
+            </div>
           </div>
           <div className="map-layout">
             <div className="apiary-map">
-              {remoteApiaries.map((apiary) => (
+              {mapPoints.apiaries.map(({ apiary, x, y }) => (
                 <button
                   className={`map-pin ${apiary.health}`}
                   key={apiary.id}
-                  onClick={() => onToast(`${apiary.name}: ${apiary.hives} colmenas, salud ${healthLabel[apiary.health]}`)}
-                  style={{ left: `${apiary.mapX}%`, top: `${apiary.mapY}%` }}
+                  onClick={() => onToast(`${apiary.name}: ${apiary.hives} colmenas - ${formatCoords(apiary)}`)}
+                  style={{ left: `${x}%`, top: `${y}%` }}
                   type="button"
                 >
                   <span>{apiary.hives}</span>
                 </button>
               ))}
+              {mapPoints.user && (
+                <span className="user-gps-pin" style={{ left: `${mapPoints.user.x}%`, top: `${mapPoints.user.y}%` }}>
+                  <i />
+                </span>
+              )}
+              <div className="map-compass">GPS</div>
             </div>
             <div className="apiary-list">
+              {userLocation && (
+                <article className="apiary-row gps-row">
+                  <div>
+                    <strong>Tu ubicacion</strong>
+                    <small>{userLocation.latitude.toFixed(5)}, {userLocation.longitude.toFixed(5)}</small>
+                  </div>
+                  <span className="status ok">GPS</span>
+                </article>
+              )}
               {remoteApiaries.map((apiary) => (
                 <article className="apiary-row" key={apiary.id}>
                   <div>
                     <strong>{apiary.name}</strong>
-                    <small>{apiary.hives} colmenas</small>
+                    <small>{apiary.hives} colmenas - {formatCoords(apiary)}</small>
                   </div>
                   <span className={`status ${apiary.health}`}>{healthLabel[apiary.health]}</span>
                 </article>
@@ -97,7 +147,7 @@ export function DashboardView({ onToast }: DashboardViewProps) {
               <article className="inspection-row" key={`${inspection.hive}-${inspection.date}`}>
                 <div>
                   <strong>{inspection.hive} - {inspection.apiary}</strong>
-                  <small>{inspection.date} · {inspection.owner}</small>
+                  <small>{inspection.date} - {inspection.owner}</small>
                 </div>
                 <span className={`tag ${inspection.status}`}>{inspection.status === "ok" ? "Lista" : "Pendiente"}</span>
               </article>
@@ -142,4 +192,67 @@ export function DashboardView({ onToast }: DashboardViewProps) {
       </div>
     </>
   );
+}
+
+type GpsLocation = {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+};
+
+function projectApiaryMap(apiaries: Apiary[], userLocation: GpsLocation | null) {
+  const apiaryCoords = apiaries
+    .map((apiary) => ({ apiary, point: getApiaryCoords(apiary) }))
+    .filter((item): item is { apiary: Apiary; point: { latitude: number; longitude: number } } => Boolean(item.point));
+  const points = [...apiaryCoords.map((item) => item.point), ...(userLocation ? [{ latitude: userLocation.latitude, longitude: userLocation.longitude }] : [])];
+
+  if (!points.length) {
+    return {
+      apiaries: apiaries.map((apiary) => ({ apiary, x: apiary.mapX, y: apiary.mapY })),
+      user: null
+    };
+  }
+
+  const latitudes = points.map((point) => point.latitude);
+  const longitudes = points.map((point) => point.longitude);
+  const minLat = Math.min(...latitudes);
+  const maxLat = Math.max(...latitudes);
+  const minLng = Math.min(...longitudes);
+  const maxLng = Math.max(...longitudes);
+  const latRange = Math.max(maxLat - minLat, 0.01);
+  const lngRange = Math.max(maxLng - minLng, 0.01);
+
+  function project(latitude: number, longitude: number) {
+    return {
+      x: clamp(8 + ((longitude - minLng) / lngRange) * 84, 8, 92),
+      y: clamp(92 - ((latitude - minLat) / latRange) * 84, 8, 92)
+    };
+  }
+
+  return {
+    apiaries: apiaries.map((apiary) => {
+      const point = getApiaryCoords(apiary);
+      const projected = point ? project(point.latitude, point.longitude) : { x: apiary.mapX, y: apiary.mapY };
+      return { apiary, ...projected };
+    }),
+    user: userLocation ? project(userLocation.latitude, userLocation.longitude) : null
+  };
+}
+
+function getApiaryCoords(apiary: Apiary) {
+  if (typeof apiary.latitude === "number" && typeof apiary.longitude === "number") {
+    return { latitude: apiary.latitude, longitude: apiary.longitude };
+  }
+  const [latitude, longitude] = apiary.coordinates.split(",").map((value) => Number(value.trim()));
+  if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+  return null;
+}
+
+function formatCoords(apiary: Apiary) {
+  const point = getApiaryCoords(apiary);
+  return point ? `${point.latitude.toFixed(4)}, ${point.longitude.toFixed(4)}` : "Sin GPS";
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
