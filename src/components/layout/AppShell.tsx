@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { LoginScreen } from "@/features/auth/LoginScreen";
@@ -37,6 +37,9 @@ const viewMeta: Record<ViewId, { title: string; eyebrow: string }> = {
   priorities: { title: "Prioridades", eyebrow: "Roadmap operativo" }
 };
 
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+const ACTIVITY_EVENTS = ["click", "keydown", "mousemove", "scroll", "touchstart", "focus"] as const;
+
 const initialCompany: CompanyProfile = {
   productName: "ApiGestor",
   companyName: "Apicola del Valle",
@@ -66,6 +69,7 @@ export function AppShell() {
     () => Object.fromEntries(navItems.map((item) => [item.id, item.icon]))
   );
   const [toast, setToast] = useState("");
+  const inactivityTimerRef = useRef<number | null>(null);
   const meta = viewMeta[activeView];
   const navigationItems = useMemo(
     () => navItems.map((item) => ({ ...item, icon: moduleIcons[item.id] || item.icon })),
@@ -95,6 +99,43 @@ export function AppShell() {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!loggedIn) {
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = null;
+      return;
+    }
+
+    function clearInactivityTimer() {
+      if (inactivityTimerRef.current) window.clearTimeout(inactivityTimerRef.current);
+    }
+
+    function resetInactivityTimer() {
+      clearInactivityTimer();
+      inactivityTimerRef.current = window.setTimeout(() => {
+        void signOut()
+          .catch(() => undefined)
+          .finally(() => {
+            setLoggedIn(false);
+            setActiveView("dashboard");
+            showToast("Sesion cerrada por 5 minutos de inactividad");
+          });
+      }, INACTIVITY_TIMEOUT_MS);
+    }
+
+    resetInactivityTimer();
+    ACTIVITY_EVENTS.forEach((eventName) => {
+      window.addEventListener(eventName, resetInactivityTimer, { passive: true });
+    });
+
+    return () => {
+      clearInactivityTimer();
+      ACTIVITY_EVENTS.forEach((eventName) => {
+        window.removeEventListener(eventName, resetInactivityTimer);
+      });
+    };
+  }, [loggedIn]);
 
   const content = useMemo(() => {
     switch (activeView) {
