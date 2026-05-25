@@ -145,6 +145,21 @@ export function AppShell() {
         />
         {content}
       </main>
+      <nav className="mobile-tabbar" aria-label="Navegacion movil">
+        {navigationItems
+          .filter((item) => ["dashboard", "field", "production", "sales", "compliance", "settings"].includes(item.id))
+          .map((item) => (
+            <button
+              className={`mobile-tabbar-item ${activeView === item.id ? "active" : ""}`}
+              key={item.id}
+              onClick={() => setActiveView(item.id)}
+              type="button"
+            >
+              <span>{item.icon}</span>
+              <small>{item.id === "production" ? "Cosecha" : item.id === "compliance" ? "SAG" : item.id === "settings" ? "Cuenta" : item.label}</small>
+            </button>
+          ))}
+      </nav>
       <div className={`toast ${toast ? "show" : ""}`}>{toast}</div>
     </>
   );
