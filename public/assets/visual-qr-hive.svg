@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" role="img" aria-label="Colmena con codigo QR">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ecf6ef"/>
+      <stop offset="1" stop-color="#f1c55b"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="360" fill="url(#bg)"/>
+  <path d="M0 294c120-48 230-44 348-77 156-44 276-120 552-76v219H0z" fill="#2b8a58" opacity=".26"/>
+  <rect x="76" y="137" width="426" height="138" rx="20" fill="#e7a928" stroke="#705018" stroke-width="6"/>
+  <rect x="105" y="104" width="368" height="45" rx="16" fill="#f5d36d" stroke="#705018" stroke-width="6"/>
+  <path d="M126 137v138M190 137v138M254 137v138M318 137v138M382 137v138M446 137v138" stroke="#815d20" stroke-width="5" opacity=".56"/>
+  <rect x="590" y="72" width="210" height="210" rx="24" fill="#fffdf8" stroke="#0b3c31" stroke-width="9"/>
+  <g fill="#0b3c31">
+    <rect x="620" y="102" width="44" height="44" rx="5"/><rect x="726" y="102" width="44" height="44" rx="5"/><rect x="620" y="208" width="44" height="44" rx="5"/>
+    <rect x="684" y="104" width="18" height="18"/><rect x="704" y="130" width="16" height="16"/><rect x="684" y="168" width="44" height="16"/><rect x="750" y="170" width="16" height="54"/>
+    <rect x="682" y="208" width="18" height="44"/><rect x="710" y="212" width="34" height="16"/><rect x="728" y="242" width="42" height="14"/><rect x="668" y="188" width="18" height="18"/>
+  </g>
+  <rect x="128" y="230" width="70" height="32" rx="16" fill="#fffdf8" opacity=".9"/>
+  <path d="M152 246h20M162 236v20" stroke="#0b3c31" stroke-width="6" stroke-linecap="round"/>
+  <path d="M544 158c28-24 76-24 104 0" fill="none" stroke="#0b3c31" stroke-width="12" stroke-linecap="round"/>
+  <path d="M568 190c16-13 40-13 56 0" fill="none" stroke="#0b3c31" stroke-width="12" stroke-linecap="round"/>
+</svg>

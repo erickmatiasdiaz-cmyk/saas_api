@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" role="img" aria-label="Mapa GPS de apiarios">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#dcebd5"/>
+      <stop offset="1" stop-color="#c8a852"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="360" fill="url(#bg)"/>
+  <path d="M0 150c96-50 168-10 260-34 120-31 168-88 302-70 118 16 178 84 338 46v268H0z" fill="#3e6d45" opacity=".42"/>
+  <path d="M54 44h790v272H54z" fill="none" stroke="#fffdf8" stroke-width="2" opacity=".32"/>
+  <g stroke="#fffdf8" stroke-width="2" opacity=".28">
+    <path d="M54 100h790M54 156h790M54 212h790M54 268h790M144 44v272M234 44v272M324 44v272M414 44v272M504 44v272M594 44v272M684 44v272M774 44v272"/>
+  </g>
+  <path d="M210 116c0-34 28-62 62-62s62 28 62 62c0 50-62 108-62 108s-62-58-62-108z" fill="#e7a928" stroke="#fffdf8" stroke-width="8"/>
+  <circle cx="272" cy="116" r="24" fill="#fffdf8"/>
+  <path d="M532 152c0-31 25-56 56-56s56 25 56 56c0 45-56 98-56 98s-56-53-56-98z" fill="#2b8a58" stroke="#fffdf8" stroke-width="8"/>
+  <circle cx="588" cy="152" r="22" fill="#fffdf8"/>
+  <path d="M662 88c0-27 22-49 49-49s49 22 49 49c0 39-49 86-49 86s-49-47-49-86z" fill="#3c83b6" stroke="#fffdf8" stroke-width="7"/>
+  <circle cx="711" cy="88" r="18" fill="#fffdf8"/>
+  <path d="M366 244c0-29 23-52 52-52s52 23 52 52c0 42-52 92-52 92s-52-50-52-92z" fill="#d75a45" stroke="#fffdf8" stroke-width="7"/>
+  <circle cx="418" cy="244" r="19" fill="#fffdf8"/>
+  <rect x="64" y="56" width="124" height="42" rx="21" fill="#fffdf8" opacity=".92"/>
+  <text x="92" y="83" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#0b3c31">GPS</text>
+</svg>

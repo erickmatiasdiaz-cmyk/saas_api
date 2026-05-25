@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" role="img" aria-label="Inspeccion apicola en terreno">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#eef6e9"/>
+      <stop offset="1" stop-color="#d5b86a"/>
+    </linearGradient>
+    <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0b3c31"/>
+      <stop offset="1" stop-color="#08231d"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="360" fill="url(#bg)"/>
+  <path d="M0 280c120-58 218-35 340-73 140-44 248-120 560-86v239H0z" fill="#5f804e" opacity=".46"/>
+  <rect x="84" y="180" width="430" height="92" rx="18" fill="#f4cc54" stroke="#67410d" stroke-width="5"/>
+  <path d="M116 180v92M164 180v92M212 180v92M260 180v92M308 180v92M356 180v92M404 180v92M452 180v92" stroke="#8b5f19" stroke-width="4" opacity=".55"/>
+  <rect x="570" y="60" width="178" height="238" rx="28" fill="url(#dark)"/>
+  <rect x="586" y="84" width="146" height="190" rx="18" fill="#f8faf7"/>
+  <rect x="606" y="108" width="74" height="10" rx="5" fill="#0b3c31"/>
+  <rect x="606" y="138" width="104" height="18" rx="9" fill="#ddf2e4"/>
+  <rect x="606" y="170" width="104" height="18" rx="9" fill="#fff1c7"/>
+  <rect x="606" y="202" width="104" height="18" rx="9" fill="#ddf2e4"/>
+  <circle cx="708" cy="241" r="18" fill="#e7a928"/>
+  <path d="M222 92c-18 12-32 40-25 70 13 54 79 42 92 2 12-36-5-76-28-84-12-4-27 4-39 12z" fill="#f3eee2"/>
+  <path d="M206 130h78" stroke="#0b3c31" stroke-width="10" stroke-linecap="round"/>
+  <path d="M274 122c26 18 46 39 58 70" stroke="#f3eee2" stroke-width="22" stroke-linecap="round"/>
+  <circle cx="392" cy="117" r="18" fill="#111"/>
+  <path d="M338 182l60-72" stroke="#0b3c31" stroke-width="13" stroke-linecap="round"/>
+  <path d="M318 178l54 44" stroke="#0b3c31" stroke-width="13" stroke-linecap="round"/>
+</svg>

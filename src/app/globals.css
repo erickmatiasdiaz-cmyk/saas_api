@@ -1459,7 +1459,7 @@ label {
 .field-card-visual {
   background:
     linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.55)),
-    url("/assets/apicola-mockup.png");
+    url("/assets/visual-apiary-map.svg");
   background-size: cover;
   border-radius: 12px;
   min-height: 118px;
@@ -1493,22 +1493,37 @@ label {
 }
 
 .field-card-visual.inspection {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.5)),
+    url("/assets/visual-inspection.svg");
   background-position: 52% 44%;
 }
 
 .field-card-visual.qr {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.5)),
+    url("/assets/visual-qr-hive.svg");
   background-position: 82% 50%;
 }
 
 .field-card-visual.apiaries {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.5)),
+    url("/assets/visual-apiary-map.svg");
   background-position: 32% 48%;
 }
 
 .field-card-visual.treatments {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.5)),
+    url("/assets/visual-treatment.svg");
   background-position: 64% 56%;
 }
 
 .field-card-visual.biosecurity {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.5)),
+    url("/assets/visual-biosecurity.svg");
   background-position: 22% 70%;
 }
 
@@ -1626,7 +1641,7 @@ label {
 .record-hero-visual {
   background:
     linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.55)),
-    url("/assets/apicola-mockup.png");
+    url("/assets/visual-apiary-map.svg");
   background-position: 68% 52%;
   background-size: cover;
   border: 1px solid rgba(255, 255, 255, 0.42);
@@ -1662,26 +1677,44 @@ label {
 }
 
 .record-hero.hives .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-qr-hive.svg");
   background-position: 72% 48%;
 }
 
 .record-hero.traceability .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-traceability.svg");
   background-position: 92% 52%;
 }
 
 .record-hero.apiaries .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-apiary-map.svg");
   background-position: 30% 48%;
 }
 
 .record-hero.treatments .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-treatment.svg");
   background-position: 62% 56%;
 }
 
 .record-hero.biosecurity .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-biosecurity.svg");
   background-position: 22% 64%;
 }
 
 .record-hero.inventory .record-hero-visual {
+  background-image:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.48)),
+    url("/assets/visual-inventory.svg");
   background-position: 88% 58%;
 }
 
