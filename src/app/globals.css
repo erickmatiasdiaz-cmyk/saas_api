@@ -1560,6 +1560,131 @@ label {
   line-height: 1.4;
 }
 
+.record-hero {
+  align-items: stretch;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(238, 247, 239, 0.92)),
+    radial-gradient(circle at 88% 16%, rgba(231, 169, 40, 0.18), transparent 30%);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
+  margin-bottom: 16px;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.record-hero-copy {
+  align-content: center;
+  display: grid;
+  gap: 12px;
+  padding: 10px;
+}
+
+.record-hero-copy h2 {
+  font-size: clamp(28px, 3.4vw, 48px);
+  line-height: 1;
+  margin: 0;
+  max-width: 760px;
+}
+
+.record-hero-copy p {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 720px;
+}
+
+.record-hero-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.record-hero-stats span {
+  align-items: center;
+  background: rgba(255, 253, 248, 0.78);
+  border: 1px solid rgba(221, 214, 199, 0.8);
+  border-radius: 999px;
+  color: var(--muted);
+  display: inline-flex;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 12px;
+}
+
+.record-hero-stats b {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.record-hero-visual {
+  background:
+    linear-gradient(180deg, rgba(8, 47, 38, 0.02), rgba(8, 47, 38, 0.55)),
+    url("/assets/apicola-mockup.png");
+  background-position: 68% 52%;
+  background-size: cover;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  border-radius: 16px;
+  min-height: 230px;
+  overflow: hidden;
+  position: relative;
+}
+
+.record-hero-visual::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.14) 1px, transparent 1px);
+  background-size: 32px 32px;
+  content: "";
+  inset: 0;
+  opacity: 0.22;
+  position: absolute;
+}
+
+.record-hero-visual span {
+  background: rgba(255, 253, 248, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 999px;
+  bottom: 14px;
+  color: #102018;
+  font-size: 12px;
+  font-weight: 900;
+  left: 14px;
+  padding: 8px 12px;
+  position: absolute;
+  z-index: 1;
+}
+
+.record-hero.hives .record-hero-visual {
+  background-position: 72% 48%;
+}
+
+.record-hero.traceability .record-hero-visual {
+  background-position: 92% 52%;
+}
+
+.record-hero.apiaries .record-hero-visual {
+  background-position: 30% 48%;
+}
+
+.record-hero.treatments .record-hero-visual {
+  background-position: 62% 56%;
+}
+
+.record-hero.biosecurity .record-hero-visual {
+  background-position: 22% 64%;
+}
+
+.record-hero.inventory .record-hero-visual {
+  background-position: 88% 58%;
+}
+
 .weather-metrics {
   display: grid;
   gap: 8px;
@@ -2670,6 +2795,35 @@ dialog::backdrop {
     align-items: stretch;
     flex-direction: column;
     padding: 18px;
+  }
+
+  .record-hero {
+    border-radius: 18px;
+    gap: 12px;
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .record-hero-copy {
+    padding: 2px;
+  }
+
+  .record-hero-copy h2 {
+    font-size: 30px;
+  }
+
+  .record-hero-copy p {
+    font-size: 14px;
+  }
+
+  .record-hero-visual {
+    min-height: 170px;
+    order: -1;
+  }
+
+  .record-hero-stats {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .hero-strip h2,

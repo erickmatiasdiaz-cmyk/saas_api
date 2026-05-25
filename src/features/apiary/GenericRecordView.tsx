@@ -32,6 +32,51 @@ const errorData: RecordViewData = {
   rows: [{ id: "error", cells: ["La vista no pudo leer la informacion de la base de datos"] }]
 };
 
+const recordHero: Partial<Record<ViewId, { badge: string; title: string; copy: string; visual: string; metric: string }>> = {
+  apiaries: {
+    badge: "FRADA + GPS",
+    title: "Apiarios conectados a coordenadas reales.",
+    copy: "Registra ubicacion, actividad apicola, conteo de colmenas y estado operativo desde una sola vista.",
+    visual: "apiaries",
+    metric: "GPS"
+  },
+  hives: {
+    badge: "Inventario vivo",
+    title: "Cada colmena con historial, QR y estado sanitario.",
+    copy: "Controla reina, postura, reservas y acciones de seguimiento con datos listos para inspeccion en terreno.",
+    visual: "hives",
+    metric: "QR"
+  },
+  treatments: {
+    badge: "Sanidad trazable",
+    title: "Tratamientos con lote, dosis, retiro y respaldo.",
+    copy: "Ordena medicamentos, principios activos y periodos de carencia para auditoria sanitaria.",
+    visual: "treatments",
+    metric: "Lote"
+  },
+  biosecurity: {
+    badge: "Control preventivo",
+    title: "Bioseguridad y mortalidad sin perder evidencia.",
+    copy: "Registra limpieza, material externo, renovacion de cera y eventos de riesgo por apiario.",
+    visual: "biosecurity",
+    metric: "Alerta"
+  },
+  traceability: {
+    badge: "Del apiario al frasco",
+    title: "Lotes de miel con QR, margen y trazabilidad comercial.",
+    copy: "Conecta cosecha, envases, precio por kilo, costos y ficha publica para venta final.",
+    visual: "traceability",
+    metric: "Lote"
+  },
+  inventory: {
+    badge: "Bodega apicola",
+    title: "Stock critico bajo control antes de salir a terreno.",
+    copy: "Controla frascos, tapas, marcos, medicamentos y vencimientos con alertas simples.",
+    visual: "inventory",
+    metric: "Stock"
+  }
+};
+
 export function GenericRecordView({ view }: GenericRecordViewProps) {
   const [config, setConfig] = useState<RecordViewData>(loadingData);
   const [formConfig, setFormConfig] = useState<RecordFormConfig | null>(null);
@@ -42,6 +87,7 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const hero = recordHero[view];
 
   useEffect(() => {
     let mounted = true;
@@ -145,6 +191,24 @@ export function GenericRecordView({ view }: GenericRecordViewProps) {
 
   return (
     <>
+      {hero && (
+        <section className={`record-hero ${hero.visual}`}>
+          <div className="record-hero-copy">
+            <span className="pill">{hero.badge}</span>
+            <h2>{hero.title}</h2>
+            <p>{hero.copy}</p>
+            <div className="record-hero-stats">
+              {config.cards.slice(0, 3).map(([value, label]) => (
+                <span key={`${value}-${label}`}><b>{value}</b>{label}</span>
+              ))}
+            </div>
+          </div>
+          <div className="record-hero-visual">
+            <span>{hero.metric}</span>
+          </div>
+        </section>
+      )}
+
       <div className="module-grid">
         {config.cards.map(([value, label, detail]) => (
           <article className="module-card" key={`${value}-${label}`}>
